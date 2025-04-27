@@ -1,3 +1,9 @@
+import type { 
+    AuthenticatorAttestationResponseJSON,
+    PublicKeyCredentialCreationOptionsJSON,
+    RegistrationResponseJSON 
+} from '@simplewebauthn/types';
+
 export interface RegisterRequest {
     email: string;
     password: string;
@@ -18,12 +24,11 @@ export interface RevokeTokenRequest {
 }
 
 export interface PassKeyRegistrationRequest {
-    rawId?: string;
-    attestationObject?: string;
-    clientDataJSON?: string;
-    type?: string;
-    response?: string;
-    options?: string;
+    id: string;
+    rawId: string;
+    attestationObject: string;
+    clientDataJSON: string;
+    options: string;
 }
 
 export interface PassKeyAuthenticationRequest {
@@ -33,7 +38,6 @@ export interface PassKeyAuthenticationRequest {
     clientDataJSON: string;
     signature: string;
     userHandle?: string;
-    response: string;
     options: string;
 }
 

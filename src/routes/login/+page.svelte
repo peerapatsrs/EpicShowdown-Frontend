@@ -3,7 +3,7 @@
   import { authApi } from "$lib/api/auth";
   import { goto } from "$app/navigation";
   import { startAuthentication } from "@simplewebauthn/browser";
-  import axios from "axios";
+  import type { PassKeyAuthenticationRequest } from "$lib/types/auth";
 
   let email = "";
   let password = "";
@@ -11,19 +11,17 @@
   let loading = false;
 
   const handleLogin = async () => {
+    loading = true;
+    error = "";
     try {
-      loading = true;
-      error = "";
-
-      const response = await authApi.login({
+      const { accessToken, refreshToken } = await authApi.login({
         email,
         password,
       });
-      const { accessToken, refreshToken } = response;
       auth.setAuth(accessToken, refreshToken);
       goto("/");
     } catch (err: any) {
-      error = err.response?.data?.message || "เกิดข้อผิดพลาดในการเข้าสู่ระบบ";
+      error = err.response?.data?.message || "เข้าสู่ระบบไม่สำเร็จ";
       auth.clearAuth();
     } finally {
       loading = false;
@@ -31,103 +29,35 @@
   };
 
   const handlePasskeyLogin = async () => {
+    loading = true;
+    error = "";
+    auth.clearAuth();
     try {
-      loading = true;
-      error = "";
-
-      // Clear any existing auth state
-      auth.clearAuth();
-
-      // Generate a random challenge
-      const challenge = new Uint8Array(32);
-      crypto.getRandomValues(challenge);
-
-      // Get credential from browser
-      const credential = await navigator.credentials.get({
-        mediation: "optional",
-        publicKey: {
-          challenge,
-          rpId: window.location.hostname,
-          userVerification: "preferred",
-        },
-      });
-
-      if (!credential || !credential.id) {
-        throw new Error("ไม่พบ Passkey ในอุปกรณ์นี้");
+      // 1. ดึง options จากเซิร์ฟเวอร์
+      let options = await authApi
+        .getPasskeyAuthenticationOptions()
+        .then((res) => res.options);
+      if (typeof options === "string") {
+        options = JSON.parse(options);
       }
-
-      // Get authentication options with credential ID
-      const response = await authApi.getPasskeyAuthenticationOptions(
-        credential.id
-      );
-      if (!response) {
-        throw new Error("ไม่สามารถรับข้อมูล Passkey ได้");
-      }
-
-      console.log("Raw response:", response);
-
-      // Store original options for verification
-      const originalOptions = response.options || JSON.stringify(response);
-
-      // Parse the options from the response
-      let parsedOptions;
-      if (typeof response.options === "string") {
-        parsedOptions = JSON.parse(response.options);
-      } else if (typeof response === "string") {
-        parsedOptions = JSON.parse(response);
-      } else {
-        parsedOptions = response.options || response;
-      }
-
-      console.log("Parsed authentication options:", parsedOptions);
-
-      // Start the authentication process with correct format
-      const authResponse = await startAuthentication({
-        optionsJSON: {
-          ...parsedOptions,
-          challenge: parsedOptions.challenge,
-          allowCredentials: parsedOptions.allowCredentials || [],
-          rpId: parsedOptions.rpId,
-          timeout: parsedOptions.timeout,
-          userVerification: parsedOptions.userVerification,
-        },
-      });
-
-      console.log("Authentication response:", authResponse);
-
-      // Prepare verification data according to backend model
-      const verificationData = {
-        id: authResponse.id,
-        rawId: authResponse.rawId,
-        authenticatorData: authResponse.response.authenticatorData,
-        clientDataJSON: authResponse.response.clientDataJSON,
-        signature: authResponse.response.signature,
-        userHandle: authResponse.response.userHandle,
-        response: JSON.stringify(authResponse.response),
-        options: originalOptions,
+      // 3. เรียกสแกนแค่ครั้งเดียว
+      const authResp = await startAuthentication({ optionsJSON: options });
+      // 4. เตรียมข้อมูล verify และส่งไป backend
+      const verifyReq: PassKeyAuthenticationRequest = {
+        id: authResp.id,
+        rawId: authResp.rawId,
+        authenticatorData: authResp.response.authenticatorData,
+        clientDataJSON: authResp.response.clientDataJSON,
+        signature: authResp.response.signature,
+        userHandle: authResp.response.userHandle,
+        options: JSON.stringify(options),
       };
-
-      console.log("Verification request:", {
-        ...verificationData,
-        authenticatorData:
-          verificationData.authenticatorData.substring(0, 50) + "...",
-        clientDataJSON:
-          verificationData.clientDataJSON.substring(0, 50) + "...",
-        signature: verificationData.signature.substring(0, 50) + "...",
-      });
-
-      // Verify the authentication
-      const verifyResponse =
-        await authApi.verifyPasskeyAuthentication(verificationData);
-      const { accessToken, refreshToken } = verifyResponse;
+      const { accessToken, refreshToken } =
+        await authApi.verifyPasskeyAuthentication(verifyReq);
       auth.setAuth(accessToken, refreshToken);
       goto("/");
     } catch (err: any) {
-      console.error("Passkey login error:", err);
-      error =
-        err.response?.data?.message ||
-        "เกิดข้อผิดพลาดในการเข้าสู่ระบบด้วย Passkey";
-      auth.clearAuth();
+      error = err.message || "Passkey login ผิดพลาด";
     } finally {
       loading = false;
     }

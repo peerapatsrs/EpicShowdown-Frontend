@@ -36,13 +36,13 @@ export const authApi = {
         return response.data;
     },
 
-    verifyPasskeyRegistration: async (data: any) => {
+    verifyPasskeyRegistration: async (data: PassKeyRegistrationRequest) => {
         const response = await axiosInstance.post('/Auth/passkey/register/verify', data);
         return response.data;
     },
 
-    getPasskeyAuthenticationOptions: async (credentialId?: string) => {
-        const response = await axiosInstance.post('/Auth/passkey/authenticate/options', JSON.stringify(credentialId));
+    getPasskeyAuthenticationOptions: async () => {
+        const response = await axiosInstance.post('/Auth/passkey/authenticate/options');
         return response.data;
     },
 
@@ -55,4 +55,4 @@ export const authApi = {
         const response = await axiosInstance.delete(`/Auth/passkey/${passKeyId}`);
         return response.data;
     }
-}; 
+};

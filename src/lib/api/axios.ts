@@ -1,10 +1,10 @@
 import axios from 'axios';
 import { auth } from '$lib/stores/auth';
 import { get } from 'svelte/store';
-import { PUBLIC_API_URL } from '$env/static/public';
+import { PUBLIC_SITE_URL } from '$env/static/public';
 
 const axiosInstance = axios.create({
-    baseURL: `${PUBLIC_API_URL}/api`,
+    baseURL: `${PUBLIC_SITE_URL}/gw/api`,
     headers: {
         'Content-Type': 'application/json'
     },
