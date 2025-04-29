@@ -1,6 +1,5 @@
 import axios from 'axios';
 import { auth } from '$lib/stores/auth';
-import { get } from 'svelte/store';
 import { PUBLIC_SITE_URL } from '$env/static/public';
 
 const axiosInstance = axios.create({
@@ -30,10 +29,15 @@ axiosInstance.interceptors.request.use(
     }
 );
 
-let isRefreshing = false;
-let failedQueue: any[] = [];
+interface QueueItem {
+    resolve: (token: string | null) => void;
+    reject: (error: Error) => void;
+}
 
-const processQueue = (error: any, token: string | null = null) => {
+let isRefreshing = false;
+let failedQueue: QueueItem[] = [];
+
+const processQueue = (error: Error | null, token: string | null = null) => {
     failedQueue.forEach(prom => {
         if (error) {
             prom.reject(error);
@@ -81,7 +85,7 @@ axiosInstance.interceptors.response.use(
                 
                 return axiosInstance(originalRequest);
             } catch (refreshError) {
-                processQueue(refreshError, null);
+                processQueue(refreshError as Error, null);
                 auth.clearAuth();
                 return Promise.reject(refreshError);
             } finally {

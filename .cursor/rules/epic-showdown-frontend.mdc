@@ -47,7 +47,7 @@ export async function load({ fetch }) {
 
 @Rule "Date and Time"
 - Assume all dates from backend are UTC.
-- Display dates in user’s local timezone using libraries like dayjs.
+- Display dates in user's local timezone using libraries like dayjs.
 
 @Example
 ```ts
@@ -89,3 +89,43 @@ const response = await fetch(`${PUBLIC_API_URL}/products`);
 - Do not trust client-side input
 - Do not store sensitive information directly in localStorage
 - Use sessionStorage/localStorage only for non-critical information (e.g., theme preference)
+
+@Rule "Design & Style Guide"
+- Primary Colors:
+  - Background: #1a1625 (dark purple)
+  - Secondary Background: #251f35 (darker purple)
+  - Primary Highlight: gradient from #ff6b2b (orange) to #ee0979 (bright pink)
+- Gradient Usage:
+  - Primary buttons and important components use bg-gradient-to-r from-[#ff6b2b] to-[#ee0979]
+  - On hover: Use hover:from-[#ff8f59] hover:to-[#ff2a90] to emphasize interactions
+- Text Colors:
+  - Primary Text: text-white
+  - Secondary Text: text-gray-400
+  - Emphasized Text: text-[#ff6b2b]
+- Layout:
+  - Use Tailwind CSS for responsive design
+  - Grid and Flex layout
+  - Use rounded corners (rounded-lg, rounded-full) and shadow effects (shadow-lg)
+- Components Style:
+  - Card: dark background with shadow and border
+  - Buttons: rounded-full with gradient
+  - Navigation: supports both desktop and mobile
+  - Has hover effects consistent with theme
+- Animations & Transitions:
+  - Use transition for hover effects
+  - Has slide show with fade transition
+  - Use opacity transitions for slide indicators
+- Dark Theme:
+  - Dark theme by default
+  - Use dark background to emphasize modernity
+  - Has gradient from dark to lighter colors for depth
+- Responsive Design:
+  - Use Tailwind breakpoints (sm:, lg:)
+  - Layout adjusts to screen size
+  - Navigation separates mobile and desktop
+- Special Effects:
+  - Has gradient overlays on images
+  - Has hover states consistent with theme
+  - Use opacity and transitions for smooth effects
+
+Overall, the design of Epic Showdown emphasizes modernity, dark theme, and uses orange-pink as a highlight, suitable for gaming/entertainment platform

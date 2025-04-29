@@ -2,154 +2,302 @@
 	import { auth } from '$lib/stores/auth';
 	import { authApi } from '$lib/api/auth';
 	import { startRegistration } from '@simplewebauthn/browser';
+	import { onMount } from 'svelte';
+	import { clickOutside } from '$lib/actions/clickOutside';
 
 	let error = '';
 	let success = '';
 	let loading = false;
+	let currentSlide = 0;
+	let isUserMenuOpen = false;
+	let isMainMenuOpen = false;
 
-	function decodeBase64UrlToUint8Array(input: string): Uint8Array {
-		let b64 = input.replace(/-/g, '+').replace(/_/g, '/');
-		const pad = b64.length % 4;
-		if (pad) b64 += '='.repeat(4 - pad);
-		const str = window.atob(b64);
-		return Uint8Array.from(str, (c) => c.charCodeAt(0));
-	}
-
-	function toUint8Array(value: any): Uint8Array {
-		if (value instanceof Uint8Array) return value;
-		if (value instanceof ArrayBuffer) return new Uint8Array(value);
-		if (Array.isArray(value)) return new Uint8Array(value);
-		if (typeof value === 'string') return decodeBase64UrlToUint8Array(value);
-		throw new Error(`Invalid format for challenge/user.id: ${typeof value}`);
-	}
-
-	const addPasskey = async () => {
-		loading = true;
-		error = success = '';
-		try {
-			const resp = await authApi.getPasskeyRegisterOptions();
-			let options: any = typeof resp.options === 'string' ? JSON.parse(resp.options) : resp.options;
-			options.authenticatorSelection = {
-				...options.authenticatorSelection,
-				residentKey: 'required',
-				requireResidentKey: true
-			};
-			const regResp = await startRegistration({ optionsJSON: options });
-			await authApi.verifyPasskeyRegistration({
-				id: regResp.id,
-				rawId: regResp.rawId,
-				attestationObject: regResp.response.attestationObject,
-				clientDataJSON: regResp.response.clientDataJSON,
-				options: JSON.stringify(options)
-			});
-			success = 'Passkey ลงทะเบียนสำเร็จ';
-		} catch (err: any) {
-			console.error(err);
-			error = err.response?.data?.message || err.message || 'ลงทะเบียน Passkey ผิดพลาด';
-		} finally {
-			loading = false;
+	const slides = [
+		{
+			image: '/images/tournament-winners.png',
+			alt: 'ผู้ชนะการแข่งขัน - อันดับ 1 Taro, อันดับ 2 Misaki, อันดับ 3 Akira'
+		},
+		{
+			image: 'https://placehold.co/800x600/27292a/ff6b2b?text=Esports+Tournament',
+			alt: 'Esports Tournament'
+		},
+		{
+			image: 'https://placehold.co/800x600/27292a/ff6b2b?text=Charity+Run',
+			alt: 'Charity Run'
+		},
+		{
+			image: 'https://placehold.co/800x600/27292a/ff6b2b?text=Music+Concert',
+			alt: 'Music Concert'
 		}
-	};
+	];
+
+	onMount(() => {
+		const interval = setInterval(() => {
+			currentSlide = (currentSlide + 1) % slides.length;
+		}, 3000); // เปลี่ยนสไลด์ทุก 3 วินาที
+
+		return () => clearInterval(interval);
+	});
 
 	const handleLogout = () => {
 		auth.clearAuth();
 		window.location.href = '/login';
 	};
+
+	const mainMenuItems = [
+		{ label: 'หน้าแรก', href: '/' },
+		{ label: 'กิจกรรมทั้งหมด', href: '/activities' },
+		{ label: 'กิจกรรมของฉัน', href: '/my-activities' },
+		{ label: 'การสนับสนุนของฉัน', href: '/my-supports' }
+	];
+
+	const mainMenuNoAuthItems = [
+		{ label: 'วิธีการใช้งาน', href: '/how-to' }
+	];
+
+	const userMenuItems = [
+		{ label: 'ข้อมูลส่วนตัว', href: '/profile' },
+		{ label: 'การตั้งค่า', href: '/settings' },
+		{ label: 'จัดการ Passkey', href: '/passkeys' },
+		{ label: 'ออกจากระบบ', action: handleLogout }
+	];
+
+	function closeMenus() {
+		isUserMenuOpen = false;
+		isMainMenuOpen = false;
+	}
 </script>
 
-<div
-	class="flex min-h-screen items-center justify-center bg-gradient-to-br from-indigo-100 to-pink-100 p-4"
->
-	<div
-		class="w-full max-w-xl overflow-hidden rounded-2xl border border-gray-200 bg-white/70 shadow-xl backdrop-blur-md"
-	>
-		<div class="px-8 py-6">
-			<header class="mb-6 text-center">
-				<h1
-					class="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-4xl font-extrabold text-transparent"
-				>
-					Epic Showdown n
-				</h1>
-				<p class="mt-2 text-gray-700">จัดการ Passkey &amp; Logout ง่ายดาย</p>
-			</header>
 
-			{#if $auth.isAuthenticated}
-				<!-- Passkey Section -->
-				<section class="space-y-4">
-					<div class="flex items-center justify-between">
-						<h2 class="text-2xl font-semibold text-gray-800">เพิ่ม Passkey</h2>
+	<!-- Hero Section -->
+	<div class="relative">
+		<div class="container mx-auto px-4 py-16">
+			<div class="flex flex-col items-center justify-center gap-8 lg:flex-row">
+				<!-- Left Content -->
+				<div class="flex-1">
+					<div class="mb-8">
+						<h2 class="mb-2 text-4xl font-bold text-white">ค้นหากิจกรรม</h2>
+						<p class="text-lg text-gray-400">ค้นหากิจกรรมที่คุณสนใจเพื่อส่งกำลังใจและของขวัญ</p>
+					</div>
+					<div class="space-y-4">
+						<div>
+							<input
+								type="text"
+								placeholder="ชื่อกิจกรรม หรือ ชื่อผู้จัด"
+								class="w-full rounded-lg bg-[#251f35] px-6 py-4 text-white placeholder-gray-500 outline-none focus:ring-2 focus:ring-[#ff6b2b]"
+							/>
+						</div>
+						<div>
+							<select
+								class="w-full rounded-lg bg-[#251f35] px-6 py-4 text-white outline-none focus:ring-2 focus:ring-[#ff6b2b]"
+							>
+								<option value="">ทุกประเภท</option>
+								<option value="game">เกม</option>
+								<option value="sport">กีฬา</option>
+								<option value="music">ดนตรี</option>
+								<option value="other">อื่นๆ</option>
+							</select>
+						</div>
 						<button
-							on:click={handleLogout}
-							class="rounded-lg bg-red-500 px-4 py-2 text-white transition hover:bg-red-600"
+							class="w-full rounded-lg bg-gradient-to-r from-[#ff6b2b] to-[#ee0979] px-8 py-4 font-medium text-white transition hover:from-[#ff8f59] hover:to-[#ff2a90]"
 						>
-							ออกจากระบบ
+							ค้นหากิจกรรม
 						</button>
 					</div>
-
-					<!-- Messages -->
-					{#if error}
-						<div class="rounded-lg border border-red-200 bg-red-50 p-3 text-red-700">
-							{error}
-						</div>
-					{/if}
-					{#if success}
-						<div class="rounded-lg border border-green-200 bg-green-50 p-3 text-green-700">
-							{success}
-						</div>
-					{/if}
-
-					<!-- Action Button -->
-					<div class="text-center">
-						<button
-							on:click={addPasskey}
-							disabled={loading}
-							class="inline-flex items-center rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-3 font-medium text-white shadow-md transition-transform hover:-translate-y-0.5 hover:from-indigo-700 hover:to-purple-700 disabled:opacity-50"
-						>
-							{#if loading}
-								<svg class="mr-2 h-5 w-5 animate-spin" viewBox="0 0 24 24">
-									<circle
-										class="opacity-25"
-										cx="12"
-										cy="12"
-										r="10"
-										stroke="currentColor"
-										stroke-width="4"
-									/>
-									<path
-										class="opacity-75"
-										fill="currentColor"
-										d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-									/>
-								</svg>
-								กำลังดำเนินการ...
-							{:else}
-								เพิ่ม Passkey
-							{/if}
-						</button>
-					</div>
-				</section>
-			{:else}
-				<div class="py-12 text-center">
-					<p class="mb-4 text-gray-600">กรุณาเข้าสู่ระบบก่อนใช้งาน</p>
-					<a
-						href="/login"
-						class="rounded-lg bg-gradient-to-r from-indigo-500 to-purple-500 px-8 py-3 text-white shadow-lg transition hover:from-indigo-600 hover:to-purple-600"
-					>
-						เข้าสู่ระบบ
-					</a>
 				</div>
-			{/if}
+
+				<!-- Right Content - Hero Image -->
+				<div class="relative flex-1">
+					<div class="relative h-[400px] overflow-hidden rounded-lg">
+						{#each slides as slide, i}
+							<div
+								class="absolute left-0 top-0 h-full w-full transition-opacity duration-500"
+								style="opacity: {currentSlide === i ? '1' : '0'}"
+							>
+								<img
+									src={slide.image}
+									alt={slide.alt}
+									class="h-full w-full object-cover shadow-2xl"
+								/>
+								<div
+									class="absolute inset-0 bg-gradient-to-t from-[#1a1625]/80 to-transparent opacity-75"
+								/>
+							</div>
+						{/each}
+
+						<!-- Slide Indicators -->
+						<div
+							class="absolute bottom-4 left-1/2 flex -translate-x-1/2 transform gap-2"
+						>
+							{#each slides as _, i}
+								<button
+									class="h-2 w-2 rounded-full transition-all {currentSlide === i
+										? 'bg-gradient-to-r from-[#ff6b2b] to-[#ee0979] w-6'
+										: 'bg-white/50 hover:bg-white/75'}"
+									on:click={() => (currentSlide = i)}
+									aria-label="Go to slide {i + 1}"
+								/>
+							{/each}
+						</div>
+					</div>
+				</div>
+			</div>
 		</div>
 	</div>
-</div>
+
+	<!-- Popular Activities Section -->
+	<div class="container mx-auto px-4 py-16">
+		<div class="mb-8 flex items-center justify-between">
+			<div>
+				<h2 class="mb-2 text-3xl font-bold text-white">กิจกรรมยอดนิยม</h2>
+				<p class="text-gray-400">กิจกรรมที่ได้รับความนิยมสูงสุดในขณะนี้</p>
+			</div>
+			<a
+				href="/activities"
+				class="rounded-full border-2 border-[#ff6b2b] px-6 py-2 text-[#ff6b2b] transition hover:bg-gradient-to-r hover:from-[#ff6b2b] hover:to-[#ee0979] hover:text-white"
+			>
+				ดูทั้งหมด
+			</a>
+		</div>
+
+		<div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-5">
+			<!-- Activity Card 1 -->
+			<div class="overflow-hidden rounded-lg bg-[#251f35] shadow-lg">
+				<div class="relative">
+					<img
+						src="https://placehold.co/400x300"
+						alt="Activity"
+						class="h-48 w-full object-cover"
+					/>
+					<div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 p-4">
+						<span class="rounded-full bg-gradient-to-r from-[#ff6b2b] to-[#ee0979] px-3 py-1 text-sm text-white"
+							>เกม</span
+						>
+					</div>
+				</div>
+				<div class="p-4">
+					<h3 class="mb-2 text-lg font-semibold text-white">การแข่งขัน ROV Tournament</h3>
+					<p class="mb-4 text-sm text-gray-400">โดย Gaming Thailand</p>
+					<div class="flex items-center justify-between">
+						<span class="text-[#ff6b2b]">฿100 - ฿1,000</span>
+						<button
+							class="rounded-full bg-gradient-to-r from-[#ff6b2b] to-[#ee0979] px-4 py-1 text-sm text-white hover:from-[#ff8f59] hover:to-[#ff2a90]"
+							>สนับสนุน</button
+						>
+					</div>
+				</div>
+			</div>
+
+			<!-- Activity Card 2 -->
+			<div class="overflow-hidden rounded-lg bg-[#251f35] shadow-lg">
+				<div class="relative">
+					<img
+						src="https://placehold.co/400x300"
+						alt="Activity"
+						class="h-48 w-full object-cover"
+					/>
+					<div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 p-4">
+						<span class="rounded-full bg-gradient-to-r from-[#ff6b2b] to-[#ee0979] px-3 py-1 text-sm text-white"
+							>กีฬา</span
+						>
+					</div>
+				</div>
+				<div class="p-4">
+					<h3 class="mb-2 text-lg font-semibold text-white">แข่งขันฟุตบอลการกุศล</h3>
+					<p class="mb-4 text-sm text-gray-400">โดย Sports For All</p>
+					<div class="flex items-center justify-between">
+						<span class="text-[#ff6b2b]">฿50 - ฿500</span>
+						<button
+							class="rounded-full bg-gradient-to-r from-[#ff6b2b] to-[#ee0979] px-4 py-1 text-sm text-white hover:from-[#ff8f59] hover:to-[#ff2a90]"
+							>สนับสนุน</button
+						>
+					</div>
+				</div>
+			</div>
+
+			<!-- Activity Card 3 -->
+			<div class="overflow-hidden rounded-lg bg-[#251f35] shadow-lg">
+				<div class="relative">
+					<img
+						src="https://placehold.co/400x300"
+						alt="Activity"
+						class="h-48 w-full object-cover"
+					/>
+					<div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 p-4">
+						<span class="rounded-full bg-gradient-to-r from-[#ff6b2b] to-[#ee0979] px-3 py-1 text-sm text-white"
+							>ดนตรี</span
+						>
+					</div>
+				</div>
+				<div class="p-4">
+					<h3 class="mb-2 text-lg font-semibold text-white">คอนเสิร์ตการกุศล</h3>
+					<p class="mb-4 text-sm text-gray-400">โดย Music For Life</p>
+					<div class="flex items-center justify-between">
+						<span class="text-[#ff6b2b]">฿200 - ฿2,000</span>
+						<button
+							class="rounded-full bg-gradient-to-r from-[#ff6b2b] to-[#ee0979] px-4 py-1 text-sm text-white hover:from-[#ff8f59] hover:to-[#ff2a90]"
+							>สนับสนุน</button
+						>
+					</div>
+				</div>
+			</div>
+
+			<!-- Activity Card 4 -->
+			<div class="overflow-hidden rounded-lg bg-[#251f35] shadow-lg">
+				<div class="relative">
+					<img
+						src="https://placehold.co/400x300"
+						alt="Activity"
+						class="h-48 w-full object-cover"
+					/>
+					<div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 p-4">
+						<span class="rounded-full bg-gradient-to-r from-[#ff6b2b] to-[#ee0979] px-3 py-1 text-sm text-white"
+							>เกม</span
+						>
+					</div>
+				</div>
+				<div class="p-4">
+					<h3 class="mb-2 text-lg font-semibold text-white">PUBG Mobile Championship</h3>
+					<p class="mb-4 text-sm text-gray-400">โดย ESports TH</p>
+					<div class="flex items-center justify-between">
+						<span class="text-[#ff6b2b]">฿150 - ฿1,500</span>
+						<button
+							class="rounded-full bg-gradient-to-r from-[#ff6b2b] to-[#ee0979] px-4 py-1 text-sm text-white hover:from-[#ff8f59] hover:to-[#ff2a90]"
+							>สนับสนุน</button
+						>
+					</div>
+				</div>
+			</div>
+
+			<!-- Activity Card 5 -->
+			<div class="overflow-hidden rounded-lg bg-[#251f35] shadow-lg">
+				<div class="relative">
+					<img
+						src="https://placehold.co/400x300"
+						alt="Activity"
+						class="h-48 w-full object-cover"
+					/>
+					<div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 p-4">
+						<span class="rounded-full bg-gradient-to-r from-[#ff6b2b] to-[#ee0979] px-3 py-1 text-sm text-white"
+							>อื่นๆ</span
+						>
+					</div>
+				</div>
+				<div class="p-4">
+					<h3 class="mb-2 text-lg font-semibold text-white">งานวิ่งการกุศล</h3>
+					<p class="mb-4 text-sm text-gray-400">โดย Run For Life</p>
+					<div class="flex items-center justify-between">
+						<span class="text-[#ff6b2b]">฿300 - ฿3,000</span>
+						<button
+							class="rounded-full bg-gradient-to-r from-[#ff6b2b] to-[#ee0979] px-4 py-1 text-sm text-white hover:from-[#ff8f59] hover:to-[#ff2a90]"
+							>สนับสนุน</button
+						>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
 
 <style>
-	/* Custom scroll for wide cards */
-	.horizontal-scroll::-webkit-scrollbar {
-		height: 6px;
-	}
-	.horizontal-scroll::-webkit-scrollbar-thumb {
-		background-color: rgba(100, 100, 100, 0.4);
-		border-radius: 3px;
-	}
+	/* Add any custom styles here */
 </style>
