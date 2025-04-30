@@ -1,4 +1,3 @@
-# src/routes/manage-data/+page.svelte
 <script lang="ts">
   import { onMount } from 'svelte';
   import axiosInstance from '$lib/api/axios';

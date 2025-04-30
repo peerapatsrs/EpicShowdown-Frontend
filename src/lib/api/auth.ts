@@ -31,10 +31,10 @@ export const authApi = {
     },
 
     // Passkey (WebAuthn) endpoints
-    getPasskeys: async () => {
-        const response = await axiosInstance.get('/Auth/passkeys');
-        return response.data;
-    },
+    // getPasskeys: async () => {
+    //     const response = await axiosInstance.get('/Auth/passkeys');
+    //     return response.data;
+    // },
 
     getPasskeyRegisterOptions: async () => {
         const response = await axiosInstance.post('/Auth/passkey/register/options');

@@ -8,18 +8,18 @@
   let error = '';
   let success = '';
 
-  const fetchPasskeys = async () => {
-    loading = true;
-    error = '';
-    try {
-      const response = await authApi.getPasskeys();
-      passkeys = response.data;
-    } catch (err: any) {
-      error = err.response?.data?.message || 'ไม่สามารถดึงข้อมูล Passkey ได้';
-    } finally {
-      loading = false;
-    }
-  };
+  // const fetchPasskeys = async () => {
+  //   loading = true;
+  //   error = '';
+  //   try {
+  //     const response = await authApi.getPasskeys();
+  //     passkeys = response.data;
+  //   } catch (err: any) {
+  //     error = err.response?.data?.message || 'ไม่สามารถดึงข้อมูล Passkey ได้';
+  //   } finally {
+  //     loading = false;
+  //   }
+  // };
 
   const addPasskey = async () => {
     loading = true;
@@ -41,7 +41,7 @@
         options: JSON.stringify(options)
       });
       success = 'Passkey ลงทะเบียนสำเร็จ';
-      await fetchPasskeys();
+      //await fetchPasskeys();
     } catch (err: any) {
       console.error(err);
       error = err.response?.data?.message || err.message || 'ลงทะเบียน Passkey ผิดพลาด';
@@ -58,7 +58,7 @@
     try {
       await authApi.deletePasskey(passKeyId);
       success = 'ลบ Passkey สำเร็จ';
-      await fetchPasskeys();
+      //await fetchPasskeys();
     } catch (err: any) {
       error = err.response?.data?.message || 'ไม่สามารถลบ Passkey ได้';
     } finally {
@@ -66,7 +66,7 @@
     }
   };
 
-  onMount(fetchPasskeys);
+  //onMount(fetchPasskeys);
 </script>
 
 <div class="container mx-auto px-4 py-8">

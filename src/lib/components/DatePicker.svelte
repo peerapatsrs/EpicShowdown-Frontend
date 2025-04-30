@@ -184,7 +184,8 @@
       <div class="grid grid-cols-7 gap-1">
         {#each generateCalendarDays() as day}
           {#if day === null}
-            <div class="h-8" />
+            <div class="h-8">
+            </div>
           {:else}
             {@const currentDate = dayjs(tempDate || value || undefined).date(day).format('YYYY-MM-DD')}
             {@const isSelected = currentDate === (tempDate || value)}

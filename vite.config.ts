@@ -15,12 +15,12 @@ export default defineConfig({
 		},
 		proxy: {
 			'gw/api': {
-				target: 'http://localhost:8000',
+				target: 'https://localhost:8000',
 				changeOrigin: true,
 				secure: false,
 				rewrite: (path) => path.replace(/^\/api/, ''),
 				headers: {
-					'Origin': 'http://localhost:8000'
+					'Origin': 'https://localhost:8000'
 				}
 			}
 		}
