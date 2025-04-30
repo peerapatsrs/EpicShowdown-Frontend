@@ -1,16 +1,24 @@
 import { writable } from 'svelte/store';
 import { browser } from '$app/environment';
+import { jwtDecode } from 'jwt-decode';
 
 interface AuthState {
     isAuthenticated: boolean;
     accessToken: string | null;
     refreshToken: string | null;
+    userRole: string | null;
+}
+
+interface JwtPayload {
+    UserRole: string;
+    [key: string]: string;
 }
 
 const initialState: AuthState = {
     isAuthenticated: false,
     accessToken: null,
-    refreshToken: null
+    refreshToken: null,
+    userRole: null
 };
 
 function getPersistedState(): AuthState {
@@ -22,10 +30,20 @@ function getPersistedState(): AuthState {
         return {
             isAuthenticated: !!parsed.accessToken,
             accessToken: parsed.accessToken,
-            refreshToken: parsed.refreshToken
+            refreshToken: parsed.refreshToken,
+            userRole: parsed.userRole
         };
     } catch {
         return initialState;
+    }
+}
+
+function extractRoleFromToken(token: string): string | null {
+    try {
+        const decoded = jwtDecode<JwtPayload>(token);
+        return decoded.UserRole || null;
+    } catch {
+        return null;
     }
 }
 
@@ -41,10 +59,12 @@ const createAuthStore = () => {
     return {
         subscribe,
         setAuth: (accessToken: string, refreshToken: string) => {
+            const userRole = extractRoleFromToken(accessToken);
             const newState = {
                 isAuthenticated: true,
                 accessToken,
-                refreshToken
+                refreshToken,
+                userRole
             };
             persistState(newState);
             set(newState);
@@ -57,10 +77,12 @@ const createAuthStore = () => {
         },
         updateToken: (accessToken: string) => {
             update(state => {
+                const userRole = extractRoleFromToken(accessToken);
                 const newState = {
                     ...state,
                     accessToken,
-                    isAuthenticated: true
+                    isAuthenticated: true,
+                    userRole
                 };
                 persistState(newState);
                 return newState;
@@ -73,6 +95,14 @@ const createAuthStore = () => {
         getRefreshToken: () => {
             const state = getPersistedState();
             return state.refreshToken;
+        },
+        getUserRole: () => {
+            const state = getPersistedState();
+            return state.userRole;
+        },
+        hasRole: (role: string) => {
+            const state = getPersistedState();
+            return state.userRole === role;
         }
     };
 };

@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { auth } from '$lib/stores/auth';
 import { PUBLIC_SITE_URL } from '$env/static/public';
+import { goto } from '$app/navigation';
 
 const axiosInstance = axios.create({
     baseURL: `${PUBLIC_SITE_URL}/gw/api`,
@@ -56,6 +57,8 @@ axiosInstance.interceptors.response.use(
         
         if (error.response?.status === 401 && !originalRequest._retry) {
             if (isRefreshing) {
+                auth.clearAuth();
+                goto('/login');
                 return new Promise((resolve, reject) => {
                     failedQueue.push({ resolve, reject });
                 })
@@ -63,7 +66,9 @@ axiosInstance.interceptors.response.use(
                     originalRequest.headers.Authorization = `Bearer ${token}`;
                     return axiosInstance(originalRequest);
                 })
-                .catch(err => Promise.reject(err));
+                .catch(err => {
+                    return Promise.reject(err);
+                });
             }
 
             originalRequest._retry = true;

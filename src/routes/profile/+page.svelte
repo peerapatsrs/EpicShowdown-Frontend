@@ -8,9 +8,7 @@ import buddhistEra from 'dayjs/plugin/buddhistEra';
 import axiosInstance from '$lib/api/axios';
 import { authApi } from '$lib/api/auth';
 import { startRegistration } from '@simplewebauthn/browser';
-import Flatpickr from 'svelte-flatpickr';
 import 'flatpickr/dist/flatpickr.css';
-import { Thai } from 'flatpickr/dist/l10n/th.js';
 import DatePicker from '$lib/components/DatePicker.svelte';
 
 // เพิ่ม plugin สำหรับจัดการ timezone
@@ -40,71 +38,6 @@ let passwordForm = {
   currentPassword: '',
   newPassword: ''
 };
-
-const flatpickrOptions = {
-  dateFormat: 'Y-m-d',
-  locale: Thai,
-  disableMobile: false,
-  maxDate: new Date(),
-  altInput: true,
-  altFormat: 'j F Y',
-  allowInput: true,
-  monthSelectorType: 'dropdown' as const
-};
-
-let showDatePicker = false;
-let selectedDate = '';
-let tempDate = '';
-let showMonthDropdown = false;
-let showYearDropdown = false;
-
-function toggleDatePicker() {
-  showDatePicker = !showDatePicker;
-  if (showDatePicker) {
-    tempDate = form.dateOfBirth;
-  }
-}
-
-function handleDateSelect(date: string) {
-  tempDate = date;
-}
-
-function applyDate() {
-  form.dateOfBirth = tempDate;
-  showDatePicker = false;
-}
-
-function generateCalendarDays() {
-  const currentDate = tempDate ? dayjs(tempDate) : dayjs();
-  const startOfMonth = currentDate.startOf('month');
-  const endOfMonth = currentDate.endOf('month');
-  const startDay = startOfMonth.day(); // 0 = Sunday
-  const daysInMonth = currentDate.daysInMonth();
-  
-  const days = [];
-  // Add empty days for padding
-  for (let i = 0; i < startDay; i++) {
-    days.push(null);
-  }
-  // Add actual days
-  for (let i = 1; i <= daysInMonth; i++) {
-    days.push(i);
-  }
-  return days;
-}
-
-function formatDisplayDate(date: string) {
-  return date ? dayjs(date).tz('Asia/Bangkok').format('D MMMM BBBB') : 'เลือกวันเกิด';
-}
-
-function getYearRange() {
-  const currentYear = dayjs().year();
-  const years = [];
-  for (let i = currentYear; i >= currentYear - 100; i--) {
-    years.push(i);
-  }
-  return years;
-}
 
 async function fetchProfile() {
   loading = true;

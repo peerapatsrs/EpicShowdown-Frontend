@@ -13,7 +13,7 @@
 		{ label: 'หน้าแรก', href: '/' },
 		{ label: 'กิจกรรมทั้งหมด', href: '/activities' },
 		{ label: 'กิจกรรมของฉัน', href: '/my-activities' },
-		{ label: 'การสนับสนุนของฉัน', href: '/my-supports' }
+		{ label: 'จัดการข้อมูลหลัก', href: '/manage-data', role: 'Admin' }
 	];
 
 	const mainMenuNoAuthItems = [
@@ -27,6 +27,7 @@
 
 	const userMenuItems = [
 		{ label: 'ข้อมูลส่วนตัว', href: '/profile' },
+		{ label: 'การเงิน', href: '/finance' },
 		{ label: 'การตั้งค่า', href: '/settings' },
 		{ label: 'จัดการ Passkey', href: '/passkeys' },
 		{ label: 'ออกจากระบบ', action: handleLogout }
@@ -76,15 +77,17 @@
 					<ul class="flex items-center gap-6">
 						{#if $auth.isAuthenticated}
 							{#each mainMenuItems as item}
-								<li>
-									<a
-										href={item.href}
-										class="text-gray-300 transition hover:text-[#ff6b2b]"
-										on:click={closeMenus}
-									>
-										{item.label}
-									</a>
-								</li>
+								{#if !item.role || item.role === $auth.userRole}
+									<li>
+										<a
+											href={item.href}
+											class="text-gray-300 transition hover:text-[#ff6b2b]"
+											on:click={closeMenus}
+										>
+											{item.label}
+										</a>
+									</li>
+								{/if}
 							{/each}
 						{/if}
 						{#each mainMenuNoAuthItems as item}

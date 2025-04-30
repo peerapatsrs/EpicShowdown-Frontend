@@ -1,9 +1,3 @@
-import type { 
-    AuthenticatorAttestationResponseJSON,
-    PublicKeyCredentialCreationOptionsJSON,
-    RegistrationResponseJSON 
-} from '@simplewebauthn/types';
-
 export interface RegisterRequest {
     email: string;
     password: string;
