@@ -131,10 +131,11 @@
     loading = true;
     error = success = '';
     try {
-      await axiosInstance.put(`${selectedType.endpoint}/${currentItem.code}`, {
-        ...form,
-        code: currentItem.code
-      });
+      if (!form) {
+        throw new Error('Invalid form data');
+      }
+      const formData = form;
+      await axiosInstance.put(`${selectedType.endpoint}/${currentItem.code}`, formData);
       success = 'แก้ไขข้อมูลสำเร็จ';
       showEditModal = false;
       await loadData();
@@ -285,8 +286,8 @@
   {loading}
   fields={selectedType.fields}
   bind:formData={form}
-  on:submit={showAddModal ? addItem : editItem}
-  on:close={() => {
+  onSubmit={showAddModal ? addItem : editItem}
+  onClose={() => {
     showAddModal = false;
     showEditModal = false;
     resetForm();

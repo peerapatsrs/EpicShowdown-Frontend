@@ -41,7 +41,7 @@ async function handle(request: Request, params: { path?: string[] | string }, ur
 
         const fetchOptions: RequestInit = {
             method: request.method,
-            headers,
+            headers: Object.fromEntries(headers),
             body,
             redirect: 'manual',
             agent
@@ -50,12 +50,21 @@ async function handle(request: Request, params: { path?: string[] | string }, ur
         const proxyRes = await fetch(targetUrl, fetchOptions);
         const responseBody = proxyRes.body ? Readable.from(proxyRes.body) : null;
 
-        const resHeaders = new Headers(proxyRes.headers as any);
+        const resHeaders = new Headers(Object.fromEntries(Object.entries(proxyRes.headers)));
+
         resHeaders.delete('content-security-policy');
         resHeaders.delete('content-security-policy-report-only');
         resHeaders.delete('x-frame-options');
 
-        return new Response(responseBody as any, {
+        const webStream = responseBody ? new ReadableStream({
+            start(controller) {
+                responseBody.on('data', chunk => controller.enqueue(new Uint8Array(chunk)));
+                responseBody.on('end', () => controller.close());
+                responseBody.on('error', err => controller.error(err));
+            }
+        }) : null;
+
+        return new Response(webStream, {
             status: proxyRes.status,
             headers: resHeaders
         });

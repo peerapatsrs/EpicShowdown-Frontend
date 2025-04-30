@@ -1,13 +1,6 @@
 <script lang="ts">
 	import { auth } from '$lib/stores/auth';
-	import { authApi } from '$lib/api/auth';
-	import { startRegistration } from '@simplewebauthn/browser';
 	import { onMount } from 'svelte';
-	import { clickOutside } from '$lib/actions/clickOutside';
-
-	let error = '';
-	let success = '';
-	let loading = false;
 	let currentSlide = 0;
 	let isUserMenuOpen = false;
 	let isMainMenuOpen = false;
@@ -18,16 +11,12 @@
 			alt: 'ผู้ชนะการแข่งขัน - อันดับ 1 Taro, อันดับ 2 Misaki, อันดับ 3 Akira'
 		},
 		{
-			image: 'https://placehold.co/800x600/27292a/ff6b2b?text=Esports+Tournament',
+			image: '/images/secure-qr-payment.png',
 			alt: 'Esports Tournament'
 		},
 		{
-			image: 'https://placehold.co/800x600/27292a/ff6b2b?text=Charity+Run',
+			image: '/images/secure.png',
 			alt: 'Charity Run'
-		},
-		{
-			image: 'https://placehold.co/800x600/27292a/ff6b2b?text=Music+Concert',
-			alt: 'Music Concert'
 		}
 	];
 
@@ -38,34 +27,6 @@
 
 		return () => clearInterval(interval);
 	});
-
-	const handleLogout = () => {
-		auth.clearAuth();
-		window.location.href = '/login';
-	};
-
-	const mainMenuItems = [
-		{ label: 'หน้าแรก', href: '/' },
-		{ label: 'กิจกรรมทั้งหมด', href: '/activities' },
-		{ label: 'กิจกรรมของฉัน', href: '/my-activities' },
-		{ label: 'การสนับสนุนของฉัน', href: '/my-supports' }
-	];
-
-	const mainMenuNoAuthItems = [
-		{ label: 'วิธีการใช้งาน', href: '/how-to' }
-	];
-
-	const userMenuItems = [
-		{ label: 'ข้อมูลส่วนตัว', href: '/profile' },
-		{ label: 'การตั้งค่า', href: '/settings' },
-		{ label: 'จัดการ Passkey', href: '/passkeys' },
-		{ label: 'ออกจากระบบ', action: handleLogout }
-	];
-
-	function closeMenus() {
-		isUserMenuOpen = false;
-		isMainMenuOpen = false;
-	}
 </script>
 
 
@@ -120,8 +81,8 @@
 									class="h-full w-full object-cover shadow-2xl"
 								/>
 								<div
-									class="absolute inset-0 bg-gradient-to-t from-[#1a1625]/80 to-transparent opacity-75"
-								/>
+									class="absolute inset-0 bg-gradient-to-t from-[#1a1625]/20 to-transparent opacity-75"
+								></div>
 							</div>
 						{/each}
 
@@ -136,7 +97,7 @@
 										: 'bg-white/50 hover:bg-white/75'}"
 									on:click={() => (currentSlide = i)}
 									aria-label="Go to slide {i + 1}"
-								/>
+								></button>
 							{/each}
 						</div>
 					</div>
