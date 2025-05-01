@@ -1,4 +1,6 @@
-<script lang="ts">
+  <script lang="ts">
+  import { getImage, uploadImage } from '$lib/utils/image';
+
   export let show = false;
   export let title: string;
   export let loading = false;
@@ -22,37 +24,61 @@
   export let onClose: (() => void) | undefined = undefined;
 
   $: {
-    // แปลงค่า formData เป็น string สำหรับ input fields
+    for (const field of fields) {
+      if (
+        field.type === 'image' &&
+        typeof formData[field.key] === 'string' &&
+        formData[field.key]
+      ) {
+        loadImage(formData[field.key], field.key);
+      }
+    }
+    
     stringFormData = Object.entries(formData).reduce((acc, [key, value]) => {
       acc[key] = typeof value === 'string' ? value : '';
       return acc;
     }, {} as { [key: string]: string });
   }
 
-  function handleSubmit(e: Event) {
+  async function loadImage(fileName: string | undefined | boolean, key: string): Promise<void> {
+    const imageData = await getImage(fileName);
+    if (imageData) {
+      imagePreview[key] = imageData;
+    }
+  }
+
+  async function handleSubmit(e: Event) {
     e.preventDefault();
+
+    // อัพโหลดรูปภาพทั้งหมดก่อน
+    for (const [fieldKey, file] of Object.entries(imageFiles)) {
+      const formDataUpload = new FormData();
+      formDataUpload.append('file', file);
+      
+      const fileName = await uploadImage(file);
+      formData[fieldKey] = fileName;
+    }
+
     if (onSubmit) onSubmit();
   }
 
   function handleClose() {
-    // รีเซ็ตค่า preview และไฟล์รูปภาพ
     imagePreview = {};
     imageFiles = {};
     if (onClose) onClose();
   }
+  
 
-  function handleImageChange(event: Event, fieldKey: string) {
+  async function handleImageChange(event: Event, fieldKey: string) {
     const input = event.target as HTMLInputElement;
     if (input.files && input.files[0]) {
       const file = input.files[0];
-      
-      // ตรวจสอบว่าเป็นไฟล์รูปภาพ
+
       if (!file.type.startsWith('image/')) {
         alert('กรุณาอัพโหลดไฟล์รูปภาพเท่านั้น');
         return;
       }
 
-      // สร้าง URL สำหรับ preview
       const reader = new FileReader();
       reader.onload = (e) => {
         if (e.target?.result) {
@@ -61,12 +87,10 @@
       };
       reader.readAsDataURL(file);
 
-      // เก็บไฟล์ไว้สำหรับส่งข้อมูล
       imageFiles[fieldKey] = file;
-      // อัพเดท formData เพื่อให้ required validation ทำงาน
-      formData[fieldKey] = file.name;
     }
   }
+
 </script>
 
 {#if show}
@@ -107,13 +131,13 @@
                   required={field.required && !formData[field.key]}
                 />
                 {#if imagePreview[field.key] || (typeof formData[field.key] === 'string' && formData[field.key])}
-                  <div class="relative w-full h-48 bg-[#1a1625] rounded-xl overflow-hidden">
-                    <img
-                      src={imagePreview[field.key] || (formData[field.key]?.toString() || '')}
-                      alt="Preview"
-                      class="w-full h-full object-contain"
-                    />
-                  </div>
+                <div class="relative w-full h-48 bg-[#1a1625] rounded-xl overflow-hidden">
+                  <img
+                    src={imagePreview[field.key]}
+                    alt="Preview"
+                    class="w-full h-full object-contain"
+                  />
+                </div>
                 {/if}
               </div>
             {:else}

@@ -111,7 +111,7 @@
     loading = true;
     error = success = '';
     try {
-      await axiosInstance.post(selectedType.endpoint, form);
+      const response = await axiosInstance.post(selectedType.endpoint, form);
       success = 'เพิ่มข้อมูลสำเร็จ';
       showAddModal = false;
       await loadData();

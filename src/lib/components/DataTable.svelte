@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { SortConfig } from '$lib/types/table';
   import { sortItems } from '$lib/utils/sorting';
+  import { getImage } from '$lib/utils/image';
   
   export let items: any[] = [];
   export let fields: {
@@ -18,6 +19,8 @@
   export let sortConfig: SortConfig = { key: '', direction: null };
   export let onEdit: ((item: any) => void) | undefined = undefined;
   export let onDelete: ((item: any) => void) | undefined = undefined;
+
+  let imagePreview: { [key: string]: string } = {};
 
   // คำนวณข้อมูลที่เรียงลำดับแล้ว
   $: sortedItems = sortConfig.direction ? sortItems(items, sortConfig) : items;
@@ -42,6 +45,34 @@
   function handleImageError(event: Event, name: string) {
     const img = event.target as HTMLImageElement;
     img.src = getFallbackImageUrl(name);
+  }
+
+  // เพิ่มฟังก์ชันสำหรับโหลดรูปภาพ
+  async function loadImage(fileName: string | undefined | boolean, key: string): Promise<void> {
+    if (!fileName || typeof fileName !== 'string') return;
+    
+    try {
+      const imageData = await getImage(fileName);
+      if (imageData) {
+        imagePreview[key] = imageData;
+      } else {
+        imagePreview[key] = getFallbackImageUrl(key);
+      }
+    } catch (error) {
+      console.error('Error loading image:', error);
+      imagePreview[key] = getFallbackImageUrl(key);
+    }
+  }
+
+  // โหลดรูปภาพเมื่อ items เปลี่ยน
+  $: {
+    for (const item of items) {
+      for (const field of fields) {
+        if (field.type === 'image' && item[field.key]) {
+          loadImage(item[field.key], `${item.code}_${field.key}`);
+        }
+      }
+    }
   }
 </script>
 
@@ -100,7 +131,7 @@
                   </span>
                 {:else if field.type === 'image'}
                   <img 
-                    src={item[field.key]} 
+                    src={imagePreview[`${item.code}_${field.key}`] || getFallbackImageUrl(item.name)} 
                     alt={item.name} 
                     class="h-12 w-12 object-cover rounded-lg" 
                     on:error={(e) => handleImageError(e, item.name)}
