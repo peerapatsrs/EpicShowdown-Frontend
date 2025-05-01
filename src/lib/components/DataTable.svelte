@@ -2,6 +2,7 @@
   import type { SortConfig } from '$lib/types/table';
   import { sortItems } from '$lib/utils/sorting';
   import { getImage } from '$lib/utils/image';
+  import ImageModal from './ImageModal.svelte';
   
   export let items: any[] = [];
   export let fields: {
@@ -21,6 +22,9 @@
   export let onDelete: ((item: any) => void) | undefined = undefined;
 
   let imagePreview: { [key: string]: string } = {};
+  let showImageModal = false;
+  let selectedImage = '';
+  let selectedImageAlt = '';
 
   // คำนวณข้อมูลที่เรียงลำดับแล้ว
   $: sortedItems = sortConfig.direction ? sortItems(items, sortConfig) : items;
@@ -73,6 +77,18 @@
         }
       }
     }
+  }
+
+  function openImageModal(imageUrl: string, alt: string) {
+    selectedImage = imageUrl;
+    selectedImageAlt = alt;
+    showImageModal = true;
+  }
+
+  function closeImageModal() {
+    showImageModal = false;
+    selectedImage = '';
+    selectedImageAlt = '';
   }
 </script>
 
@@ -130,12 +146,18 @@
                       : (field.booleanLabels?.false || 'No')}
                   </span>
                 {:else if field.type === 'image'}
-                  <img 
-                    src={imagePreview[`${item.code}_${field.key}`] || getFallbackImageUrl(item.name)} 
-                    alt={item.name} 
-                    class="h-12 w-12 object-cover rounded-lg" 
-                    on:error={(e) => handleImageError(e, item.name)}
-                  />
+                  <button
+                    class="cursor-pointer hover:opacity-80 transition-opacity"
+                    on:click={() => openImageModal(imagePreview[`${item.code}_${field.key}`] || getFallbackImageUrl(item.name), item.name)}
+                    aria-label="ดูรูปภาพขนาดใหญ่"
+                  >
+                    <img 
+                      src={imagePreview[`${item.code}_${field.key}`] || getFallbackImageUrl(item.name)} 
+                      alt={item.name} 
+                      class="h-12 w-12 object-cover rounded-lg"
+                      on:error={(e) => handleImageError(e, item.name)}
+                    />
+                  </button>
                 {:else}
                   <span class="text-white">{item[field.key]}</span>
                 {/if}
@@ -177,4 +199,11 @@
       </div>
     {/if}
   </div>
+
+  <ImageModal 
+    show={showImageModal}
+    imageUrl={selectedImage}
+    imageAlt={selectedImageAlt}
+    onClose={closeImageModal}
+  />
 {/if} 

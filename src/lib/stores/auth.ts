@@ -52,7 +52,7 @@ const createAuthStore = () => {
 
     const persistState = (state: AuthState) => {
         if (browser) {
-            localStorage.setItem('auth', JSON.stringify(state));
+            localStorage.setItem('auth', JSON.stringify(state), { expires: new Date(Date.now() + 1000 * 60 * 60 * 24) });
         }
     };
 
