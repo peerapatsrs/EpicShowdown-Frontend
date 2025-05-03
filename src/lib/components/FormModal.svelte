@@ -103,11 +103,13 @@
 </script>
 
 {#if show}
+<form on:submit|preventDefault={handleSubmit}>
   <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" transition:fade={{ duration: 200 }}>
     <div class="bg-[#2a2440] rounded-xl w-full max-w-md max-h-[90vh] flex flex-col p-0" transition:scale={{ duration: 200 }}>
       <h3 class="text-xl font-bold text-white mb-4 px-6 pt-6">{title}</h3>
       <div class="flex-1 overflow-y-auto px-6" style="min-height:0;">
-        <form on:submit|preventDefault={handleSubmit} class="space-y-4 pb-4">
+        <div class="space-y-4 pb-4">
+        
           {#each fields as field}
             <div>
               <label for={field.key} class="block text-gray-400 mb-2">{field.label}</label>
@@ -169,9 +171,9 @@
               {/if}
             </div>
           {/each}
-        </form>
       </div>
-      <div class="flex justify-end gap-4 pt-4 bg-[#2a2440] sticky bottom-0 left-0 right-0 z-10 px-6 pb-6 border-t border-[#332d4d]">
+      </div>
+      <div class="flex justify-end gap-4 pt-4 bg-[#2a2440] sticky bottom-0 left-0 right-0 z-10 px-6 pb-6 border-t border-[#332d4d] rounded-b-xl">
         <button
           type="button"
           class="px-6 py-3 rounded-xl border-2 border-gray-500 text-gray-300 hover:bg-[#1a1625] cursor-pointer transition-colors"
@@ -189,4 +191,5 @@
       </div>
     </div>
   </div>
+</form>
 {/if} 

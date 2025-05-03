@@ -1,8 +1,7 @@
 <script lang="ts">
   import dayjs from 'dayjs';
-  import { createEventDispatcher } from 'svelte';
+  import { createEventDispatcher, onMount, onDestroy } from 'svelte';
   import { clickOutside } from '$lib/actions/clickOutside';
-  import { onMount } from 'svelte';
   import { portal } from 'svelte-portal';
 
   export let value: string = '';
@@ -19,13 +18,16 @@
   let showYearDropdown = false;
   let tempDate = '';
   let inputEl: HTMLButtonElement | null = null;
+  let popupEl: HTMLDivElement | null = null;
   let popupLeft = 0;
   let popupTop = 0;
+  let popupDirection = 'bottom'; // 'bottom' | 'top'
 
   function toggleDatePicker() {
     showDatePicker = !showDatePicker;
     if (showDatePicker) {
       tempDate = value;
+      setTimeout(updatePopupPosition, 0);
     }
   }
 
@@ -72,7 +74,7 @@
     if (!date) return placeholder;
     const d = dayjs(date);
     const year = useBuddhistYear ? d.year() + 543 : d.year();
-    return `${d.format('D MMMM')} ${year}`;
+    return `${d.locale('th').format('D MMMM')} ${year}`;
   }
 
   $: isDateDisabled = (date: string) => {
@@ -82,14 +84,46 @@
   };
 
   function updatePopupPosition() {
-    if (inputEl) {
+    if (inputEl && popupEl) {
       const rect = inputEl.getBoundingClientRect();
-      popupLeft = rect.left + window.scrollX;
-      popupTop = rect.bottom + window.scrollY + 4; // 4px margin
+      let popupHeight = popupEl.getBoundingClientRect();
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const spaceAbove = rect.top;
+      if (spaceBelow < popupHeight.height && spaceAbove > popupHeight.height) {
+        // แสดงด้านบน (ขอบล่าง popup ห่างขอบบนฟิลด์ 4px)
+        popupDirection = 'top';
+        popupLeft = rect.left;
+        popupTop = (rect.bottom - rect.height) - popupHeight.height - 12;
+      } else {
+        // แสดงด้านล่าง (ขอบบน popup ห่างขอบล่างฟิลด์ 4px)
+        popupDirection = 'bottom';
+        popupLeft = rect.left;
+        popupTop = rect.bottom - 4;
+      }
     }
   }
 
-  $: if (showDatePicker) updatePopupPosition();
+  // เพิ่ม event listener สำหรับ scroll/resize
+  let scrollHandler: () => void;
+  let resizeHandler: () => void;
+
+  $: {
+    if (showDatePicker) {
+      updatePopupPosition();
+      scrollHandler = () => updatePopupPosition();
+      resizeHandler = () => updatePopupPosition();
+      window.addEventListener('scroll', scrollHandler, true);
+      window.addEventListener('resize', resizeHandler);
+    } else {
+      window.removeEventListener('scroll', scrollHandler, true);
+      window.removeEventListener('resize', resizeHandler);
+    }
+  }
+
+  onDestroy(() => {
+    window.removeEventListener('scroll', scrollHandler, true);
+    window.removeEventListener('resize', resizeHandler);
+  });
 </script>
 
 <div class="relative">
@@ -97,7 +131,7 @@
     bind:this={inputEl}
     type="button"
     class="w-full flex items-center justify-between rounded-xl bg-[#1a1625] px-4 py-3 text-white border border-gray-700 focus:border-[#ff6b2b] focus:ring-1 focus:ring-[#ff6b2b] transition-colors {buttonClass}"
-    on:click={() => { toggleDatePicker(); setTimeout(updatePopupPosition, 0); }}
+    on:click={() => { toggleDatePicker(); }}
     aria-label={placeholder}
   >
     <span class="text-left">{formatDisplayDate(value)}</span>
@@ -107,7 +141,7 @@
   </button>
 
   {#if showDatePicker}
-    <div use:portal class="fixed z-[120] mt-2 p-4 bg-[#2a2440] rounded-xl shadow-xl border border-gray-700 w-[320px]"
+    <div use:portal bind:this={popupEl} class="fixed z-[300] mt-2 p-4 bg-[#2a2440] rounded-xl shadow-xl border border-gray-700 w-[320px]"
       style="left: {popupLeft}px; top: {popupTop}px;"
       use:clickOutside on:clickoutside={() => showDatePicker = false}>
       <div class="flex items-center justify-between mb-4">
@@ -132,7 +166,7 @@
                 showYearDropdown = false;
               }}
             >
-              {dayjs(tempDate || value || undefined).format('MMMM')}
+              {dayjs(tempDate || value || undefined).locale('th').format('MMMM')}
             </button>
             
             {#if showMonthDropdown}

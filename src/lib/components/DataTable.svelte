@@ -41,7 +41,7 @@
 
   function formatDateThai(date: string) {
     if (!date) return '-';
-    return dayjs(date).tz('Asia/Bangkok').format('D MMMM BBBB HH:mm');
+    return dayjs(date).tz('Asia/Bangkok').locale('th').format('D MMMM BBBB HH:mm');
   }
 
   // คำนวณข้อมูลที่เรียงลำดับแล้ว

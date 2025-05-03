@@ -1,6 +1,5 @@
 <script lang="ts">
 import { onMount } from 'svelte';
-import { goto } from '$app/navigation';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
@@ -9,8 +8,10 @@ import axiosInstance from '$lib/api/axios';
 import { authApi } from '$lib/api/auth';
 import { startRegistration } from '@simplewebauthn/browser';
 import 'flatpickr/dist/flatpickr.css';
-import DatePicker from '$lib/components/DatePicker.svelte';
 import { isAuthenticated } from '$lib/stores/auth';
+import FormModal from '$lib/components/FormModal.svelte';
+import type { EditField } from '$lib/types/form';
+import locale from 'dayjs/locale/th';
 
 // เพิ่ม plugin สำหรับจัดการ timezone
 dayjs.extend(utc);
@@ -33,12 +34,21 @@ let success = '';
 let editMode = false;
 let passwordMode = false;
 let passkeyMode = false;
+let showEditModal = false;
 
-let form = { ...profile };
+let form: { [key: string]: string | boolean } = {};
 let passwordForm = {
   currentPassword: '',
   newPassword: ''
 };
+
+const editFields: EditField[] = [
+  { key: 'firstName', label: 'ชื่อ', type: 'text', required: true },
+  { key: 'lastName', label: 'นามสกุล', type: 'text', required: true },
+  { key: 'dateOfBirth', label: 'วันเกิด', type: 'date', maxDate: dayjs().format('YYYY-MM-DD') },
+  { key: 'phoneNumber', label: 'เบอร์โทรศัพท์', type: 'text' },
+  { key: 'address', label: 'ที่อยู่', type: 'textarea' }
+];
 
 async function fetchProfile() {
   isAuthenticated;
@@ -48,10 +58,14 @@ async function fetchProfile() {
     const { data } = await axiosInstance.get('/Profile/me');
     profile = { ...data };
     // แปลงวันที่จาก UTC เป็นเวลาไทย
-    form = {
-      ...data,
-      dateOfBirth: data.dateOfBirth ? dayjs(data.dateOfBirth).tz('Asia/Bangkok').format('YYYY-MM-DD') : ''
-    };
+    form = Object.fromEntries(
+      editFields.map(f => [
+        f.key,
+        f.key === 'dateOfBirth'
+          ? (typeof data.dateOfBirth !== 'boolean' && typeof data.dateOfBirth === 'string' && !['true','false'].includes(data.dateOfBirth) && data.dateOfBirth.trim() !== '' ? dayjs(data.dateOfBirth).tz('Asia/Bangkok').format('YYYY-MM-DD') : '')
+          : (data[f.key as keyof typeof data] !== undefined && data[f.key as keyof typeof data] !== null ? String(data[f.key as keyof typeof data]) : '')
+      ])
+    );
   } catch (e: any) {
     error = e.response?.data?.message || 'เกิดข้อผิดพลาดในการโหลดข้อมูล';
   } finally {
@@ -67,7 +81,7 @@ async function updateProfile() {
     const { data } = await axiosInstance.put('/Profile/update', {
       firstName: form.firstName,
       lastName: form.lastName,
-      dateOfBirth: form.dateOfBirth ? dayjs.tz(form.dateOfBirth, 'Asia/Bangkok').utc().format() : null,
+      dateOfBirth: form.dateOfBirth ? dayjs(form.dateOfBirth.toString()).tz('Asia/Bangkok').utc().format() : null,
       phoneNumber: form.phoneNumber,
       address: form.address
     });
@@ -78,6 +92,7 @@ async function updateProfile() {
     error = e.response?.data?.message || 'เกิดข้อผิดพลาดในการอัปเดตข้อมูล';
   } finally {
     loading = false;
+    showEditModal = false;
   }
 }
 
@@ -124,6 +139,23 @@ const addPasskey = async () => {
   }
 };
 
+function openEditModal() {
+  showEditModal = true;
+  error = success = '';
+  form = Object.fromEntries(
+    editFields.map(f => [
+      f.key,
+      f.key === 'dateOfBirth'
+        ? (typeof profile.dateOfBirth !== 'boolean' && typeof profile.dateOfBirth === 'string' && !['true','false'].includes(profile.dateOfBirth) && profile.dateOfBirth.trim() !== '' ? dayjs(profile.dateOfBirth).format('YYYY-MM-DD') : '')
+        : (profile[f.key as keyof typeof profile] !== undefined && profile[f.key as keyof typeof profile] !== null ? String(profile[f.key as keyof typeof profile]) : '')
+    ])
+  );
+}
+
+function closeEditModal() {
+  showEditModal = false;
+}
+
 onMount(fetchProfile);
 </script>
 
@@ -168,7 +200,7 @@ onMount(fetchProfile);
                       <p class="text-gray-400 text-sm mb-1">วันเกิด</p>
                       <p class="text-white font-medium">
                         {#if profile.dateOfBirth}
-                          {dayjs(profile.dateOfBirth).tz('Asia/Bangkok').format('D MMMM BBBB')}
+                          {dayjs(profile.dateOfBirth).tz('Asia/Bangkok').locale('th').format('D MMMM BBBB')}
                         {:else}
                           -
                         {/if}
@@ -198,7 +230,7 @@ onMount(fetchProfile);
             <div class="flex flex-wrap gap-4">
               <button
                 class="flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#ff6b2b] to-[#ee0979] px-6 py-3 text-white font-medium transition-transform hover:scale-105"
-                on:click={() => { editMode = true; error = success = ''; }}
+                on:click={openEditModal}
               >
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                   <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
@@ -225,82 +257,7 @@ onMount(fetchProfile);
               </button>
             </div>
           {:else if editMode}
-            <form class="space-y-6" on:submit|preventDefault={updateProfile}>
-              <div class="grid md:grid-cols-2 gap-6">
-                <div>
-                  <label for="firstName" class="block text-gray-400 mb-2 font-medium">ชื่อ</label>
-                  <input
-                    id="firstName"
-                    class="w-full rounded-xl bg-[#1a1625] px-4 py-3 text-white border border-gray-700 focus:border-[#ff6b2b] focus:ring-1 focus:ring-[#ff6b2b] transition-colors"
-                    bind:value={form.firstName}
-                    required
-                  />
-                </div>
-                <div>
-                  <label for="lastName" class="block text-gray-400 mb-2 font-medium">นามสกุล</label>
-                  <input
-                    id="lastName"
-                    class="w-full rounded-xl bg-[#1a1625] px-4 py-3 text-white border border-gray-700 focus:border-[#ff6b2b] focus:ring-1 focus:ring-[#ff6b2b] transition-colors"
-                    bind:value={form.lastName}
-                    required
-                  />
-                </div>
-              </div>
-
-              <div class="relative">
-                <label for="dateOfBirth" class="block text-gray-400 mb-2 font-medium">วันเกิด</label>
-                <DatePicker
-                  bind:value={form.dateOfBirth}
-                  placeholder="เลือกวันเกิด"
-                  maxDate={dayjs().format('YYYY-MM-DD')}
-                />
-              </div>
-
-              <div>
-                <label for="phoneNumber" class="block text-gray-400 mb-2 font-medium">เบอร์โทรศัพท์</label>
-                <input
-                  id="phoneNumber"
-                  class="w-full rounded-xl bg-[#1a1625] px-4 py-3 text-white border border-gray-700 focus:border-[#ff6b2b] focus:ring-1 focus:ring-[#ff6b2b] transition-colors"
-                  bind:value={form.phoneNumber}
-                />
-              </div>
-
-              <div>
-                <label for="address" class="block text-gray-400 mb-2 font-medium">ที่อยู่</label>
-                <textarea
-                  id="address"
-                  class="w-full rounded-xl bg-[#1a1625] px-4 py-3 text-white border border-gray-700 focus:border-[#ff6b2b] focus:ring-1 focus:ring-[#ff6b2b] transition-colors"
-                  bind:value={form.address}
-                  rows="3"
-                ></textarea>
-              </div>
-
-              <div class="flex flex-wrap gap-4 pt-4">
-                <button
-                  type="submit"
-                  class="flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#ff6b2b] to-[#ee0979] px-6 py-3 text-white font-medium transition-transform hover:scale-105"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                  </svg>
-                  บันทึก
-                </button>
-                <button
-                  type="button"
-                  class="flex items-center gap-2 rounded-xl border-2 border-gray-500 px-6 py-3 text-gray-300 font-medium hover:bg-[#1a1625] transition-colors"
-                  on:click={() => {
-                    editMode = false;
-                    error = success = '';
-                    form = { ...profile, dateOfBirth: profile.dateOfBirth ? dayjs(profile.dateOfBirth).format('YYYY-MM-DD') : '' };
-                  }}
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
-                  </svg>
-                  ยกเลิก
-                </button>
-              </div>
-            </form>
+            <!-- ลบฟอร์มเดิมออก -->
           {:else if passwordMode}
             <form class="space-y-6" on:submit|preventDefault={changePassword}>
               <div>
@@ -391,6 +348,16 @@ onMount(fetchProfile);
     </div>
   </div>
 </div>
+
+<FormModal
+  show={showEditModal}
+  title="แก้ไขข้อมูลส่วนตัว"
+  {loading}
+  fields={editFields}
+  bind:formData={form}
+  onSubmit={updateProfile}
+  onClose={closeEditModal}
+/>
 
 <style>
 :global(.flatpickr-calendar) {

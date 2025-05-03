@@ -16,11 +16,6 @@ dayjs.extend(timezone);
 dayjs.extend(buddhistEra);
 dayjs.tz.setDefault('Asia/Bangkok');
 
-function formatDateThai(date: string) {
-  if (!date) return '-';
-  return dayjs(date).tz('Asia/Bangkok').format('D MMMM BBBB HH:mm');
-}
-
 interface Contest {
   contestCode: string;
   name: string;
