@@ -6,6 +6,7 @@
   import FormModal from '$lib/components/FormModal.svelte';
   import ConfirmModal from '$lib/components/ConfirmModal.svelte';
   import Select from '$lib/components/Select.svelte';
+	import { isAuthenticated } from '$lib/stores/auth';
 
   interface DataType {
     id: string;
@@ -44,13 +45,30 @@
           label: 'สถานะ', 
           type: 'boolean',
           booleanLabels: {
-            true: 'เปิดใช้งาน',
-            false: 'ปิดใช้งาน'
+            true: '✔',
+            false: '✘'
+          }
+        }
+      ]
+    },
+    {
+      id: 'display-template',
+      name: 'Display Template',
+      endpoint: '/DisplayTemplate',
+      fields: [
+        { key: 'name', label: 'ชื่อ', type: 'text', required: true },
+        { key: 'description', label: 'คำอธิบาย', type: 'textarea' },
+        { 
+          key: 'isActive', 
+          label: 'สถานะ', 
+          type: 'boolean',
+          booleanLabels: {
+            true: '✔',
+            false: '✘'
           }
         }
       ]
     }
-    // สามารถเพิ่มประเภทข้อมูลอื่นๆ ที่มีฟิลด์ต่างกันได้
   ];
 
   let selectedType: DataType = dataTypes[0];
@@ -71,6 +89,8 @@
 
   // ฟอร์มสำหรับเพิ่ม/แก้ไขข้อมูล
   let form: FormData = {};
+
+  let processingRowId: string | null = null;
 
   // ฟังก์ชันสำหรับกรองข้อมูล
   function filterItems(items: any[], term: string) {
@@ -108,61 +128,63 @@
 
   // เพิ่มข้อมูลใหม่
   async function addItem() {
-    loading = true;
+    processingRowId = 'new';
     error = success = '';
     try {
       const response = await axiosInstance.post(selectedType.endpoint, form);
       success = 'เพิ่มข้อมูลสำเร็จ';
       showAddModal = false;
-      await loadData();
+      items = [response.data, ...items];
       resetForm();
     } catch (e) {
       error = 'เกิดข้อผิดพลาดในการเพิ่มข้อมูล';
       console.error(e);
     } finally {
-      loading = false;
+      processingRowId = null;
     }
   }
 
   // แก้ไขข้อมูล
   async function editItem() {
+    showEditModal = false;
     if (!currentItem) return;
-    loading = true;
+    processingRowId = currentItem.code;
     error = success = '';
     try {
       if (!form) {
         throw new Error('Invalid form data');
       }
       const formData = form;
-      await axiosInstance.put(`${selectedType.endpoint}/${currentItem.code}`, formData);
+      const response = await axiosInstance.put(`${selectedType.endpoint}/${currentItem.code}`, formData);
       success = 'แก้ไขข้อมูลสำเร็จ';
-      showEditModal = false;
-      await loadData();
+      items = items.map(item =>
+        item.code === currentItem.code ? response.data : item
+      );
       resetForm();
     } catch (e) {
       error = 'เกิดข้อผิดพลาดในการแก้ไขข้อมูล';
       console.error(e);
     } finally {
-      loading = false;
+      processingRowId = null;
     }
   }
 
   // ลบข้อมูล
   async function deleteItem() {
+    showDeleteModal = false;
     if (!currentItem) return;
-    loading = true;
+    processingRowId = currentItem.code;
     error = success = '';
     try {
       await axiosInstance.delete(`${selectedType.endpoint}/${currentItem.code}`);
-      await loadData(); // โหลดข้อมูลใหม่ก่อน
+      items = items.filter(item => item.code !== currentItem.code);
       success = 'ลบข้อมูลสำเร็จ';
-      showDeleteModal = false; // ปิด modal หลังจากลบสำเร็จ
       currentItem = null;
     } catch (e) {
       error = 'เกิดข้อผิดพลาดในการลบข้อมูล';
       console.error(e);
     } finally {
-      loading = false;
+      processingRowId = null;
     }
   }
 
@@ -197,7 +219,10 @@
     loadData();
   }
 
-  onMount(loadData);
+  onMount(async () => {
+    isAuthenticated
+    await loadData();
+  });
 </script>
 
 <div class="min-h-screen bg-gradient-to-b from-[#1a1625] to-[#251f35] py-12">
@@ -265,6 +290,7 @@
             {loading}
             {sortConfig}
             {showActions}
+            processingRowId={processingRowId}
             onEdit={openEditModal}
             onDelete={openDeleteModal}
           >

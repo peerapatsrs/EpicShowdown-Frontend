@@ -3,6 +3,7 @@
   export let imageUrl = '';
   export let imageAlt = '';
   export let onClose: () => void;
+  import { fade, scale } from 'svelte/transition';
 </script>
 
 {#if show}
@@ -13,8 +14,9 @@
     role="dialog" 
     aria-modal="true"
     tabindex="0"
+    transition:fade={{ duration: 200 }}
   >
-    <div class="relative max-w-4xl max-h-[90vh] mx-4" on:click|stopPropagation={() => {}} role="presentation">
+    <div class="relative max-w-4xl max-h-[90vh] mx-4" on:click|stopPropagation={() => {}} role="presentation" transition:scale={{ duration: 200 }}>
       <button 
         class="absolute -top-10 right-0 text-white hover:text-[#ff6b2b] transition-colors"
         on:click={onClose}

@@ -1,6 +1,7 @@
 import { writable } from 'svelte/store';
 import { browser } from '$app/environment';
 import { jwtDecode } from 'jwt-decode';
+import { goto } from '$app/navigation';
 
 interface AuthState {
     isAuthenticated: boolean;
@@ -27,6 +28,10 @@ function getPersistedState(): AuthState {
         const persisted = localStorage.getItem('auth');
         if (!persisted) return initialState;
         const parsed = JSON.parse(persisted);
+        if (parsed.expires && Date.now() > parsed.expires) {
+            localStorage.removeItem('auth');
+            return initialState;
+        }
         return {
             isAuthenticated: !!parsed.accessToken,
             accessToken: parsed.accessToken,
@@ -52,7 +57,8 @@ const createAuthStore = () => {
 
     const persistState = (state: AuthState) => {
         if (browser) {
-            localStorage.setItem('auth', JSON.stringify(state), { expires: new Date(Date.now() + 1000 * 60 * 60 * 24) });
+            const expires = Date.now() + 1000 * 60 * 60; // 1 ชั่วโมง
+            localStorage.setItem('auth', JSON.stringify({ ...state, expires }));
         }
     };
 
@@ -108,3 +114,11 @@ const createAuthStore = () => {
 };
 
 export const auth = createAuthStore(); 
+export const isAuthenticated = () => {
+    const state = getPersistedState();
+    if (!state.isAuthenticated) {
+        goto('/login');
+        return false;
+    }
+    return true;
+}

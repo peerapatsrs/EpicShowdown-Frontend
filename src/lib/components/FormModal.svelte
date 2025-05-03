@@ -1,5 +1,6 @@
   <script lang="ts">
   import { getImage, uploadImage } from '$lib/utils/image';
+  import { fade, scale } from 'svelte/transition';
 
   export let show = false;
   export let title: string;
@@ -28,7 +29,7 @@
       if (
         field.type === 'image' &&
         typeof formData[field.key] === 'string' &&
-        formData[field.key]
+        (formData[field.key] || formData[field.key] === '')
       ) {
         loadImage(formData[field.key], field.key);
       }
@@ -41,9 +42,14 @@
   }
 
   async function loadImage(fileName: string | undefined | boolean, key: string): Promise<void> {
+    if (fileName) {
     const imageData = await getImage(fileName);
     if (imageData) {
       imagePreview[key] = imageData;
+      }
+    }
+    else {
+      imagePreview[key] = '';
     }
   }
 
@@ -94,8 +100,8 @@
 </script>
 
 {#if show}
-  <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-    <div class="bg-[#2a2440] rounded-xl p-6 w-full max-w-md">
+  <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" transition:fade={{ duration: 200 }}>
+    <div class="bg-[#2a2440] rounded-xl p-6 w-full max-w-md" transition:scale={{ duration: 200 }}>
       <h3 class="text-xl font-bold text-white mb-4">{title}</h3>
       <form on:submit|preventDefault={handleSubmit} class="space-y-4">
         {#each fields as field}

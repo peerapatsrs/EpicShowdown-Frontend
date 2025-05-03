@@ -2,6 +2,7 @@ import axios from 'axios';
 import { auth } from '$lib/stores/auth';
 import { PUBLIC_SITE_URL } from '$env/static/public';
 import { goto } from '$app/navigation';
+import { browser } from '$app/environment';
 
 const axiosInstance = axios.create({
     baseURL: `${PUBLIC_SITE_URL}/gw/api`,
@@ -57,8 +58,6 @@ axiosInstance.interceptors.response.use(
         
         if (error.response?.status === 401 && !originalRequest._retry) {
             if (isRefreshing) {
-                auth.clearAuth();
-                goto('/login');
                 return new Promise((resolve, reject) => {
                     failedQueue.push({ resolve, reject });
                 })
@@ -67,6 +66,11 @@ axiosInstance.interceptors.response.use(
                     return axiosInstance(originalRequest);
                 })
                 .catch(err => {
+                    console.log('Catch in failedQueue', err);
+                    auth.clearAuth();
+                    if (browser) {
+                      goto('/login');
+                    }
                     return Promise.reject(err);
                 });
             }
@@ -77,11 +81,15 @@ axiosInstance.interceptors.response.use(
             const refreshTokenValue = auth.getRefreshToken();
             if (!refreshTokenValue) {
                 auth.clearAuth();
+                if (browser) {
+                  goto('/login');
+                }
                 return Promise.reject(error);
             }
 
             try {
                 const response = await refreshToken(refreshTokenValue);
+                console.log(response);
                 const { token } = response;
                 auth.updateToken(token);
                 
@@ -90,11 +98,26 @@ axiosInstance.interceptors.response.use(
                 
                 return axiosInstance(originalRequest);
             } catch (refreshError) {
+                console.log('Catch in refreshError', refreshError);
                 processQueue(refreshError as Error, null);
                 auth.clearAuth();
+                if (browser) {
+                  goto('/login');
+                }
                 return Promise.reject(refreshError);
             } finally {
                 isRefreshing = false;
+            }
+        }
+
+        // handle ทุกกรณีที่เกี่ยวกับ refresh token fail หรือ 401/400/403
+        if (
+            (originalRequest.url && originalRequest.url.includes('/Auth/refresh-token')) ||
+            (error.response && [400, 401, 403].includes(error.response.status))
+        ) {
+            auth.clearAuth();
+            if (browser) {
+                goto('/login');
             }
         }
 

@@ -10,7 +10,7 @@ import { authApi } from '$lib/api/auth';
 import { startRegistration } from '@simplewebauthn/browser';
 import 'flatpickr/dist/flatpickr.css';
 import DatePicker from '$lib/components/DatePicker.svelte';
-import { auth } from '$lib/stores/auth';
+import { isAuthenticated } from '$lib/stores/auth';
 
 // เพิ่ม plugin สำหรับจัดการ timezone
 dayjs.extend(utc);
@@ -41,10 +41,7 @@ let passwordForm = {
 };
 
 async function fetchProfile() {
-  if(!$auth.isAuthenticated) {
-    goto('/login');
-    return;
-  }
+  isAuthenticated;
   loading = true;
   error = success = '';
   try {

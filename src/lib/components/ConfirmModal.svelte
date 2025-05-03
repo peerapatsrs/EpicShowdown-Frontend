@@ -9,6 +9,8 @@
   import { createEventDispatcher } from 'svelte';
   const dispatch = createEventDispatcher();
 
+  import { fade, scale } from 'svelte/transition';
+
   function handleConfirm() {
     dispatch('confirm');
   }
@@ -19,8 +21,8 @@
 </script>
 
 {#if show}
-  <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-    <div class="bg-[#2a2440] rounded-xl p-6 w-full max-w-md">
+  <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" transition:fade={{ duration: 200 }}>
+    <div class="bg-[#2a2440] rounded-xl p-6 w-full max-w-md" transition:scale={{ duration: 200 }}>
       <h3 class="text-xl font-bold text-white mb-4">{title}</h3>
       <p class="text-gray-400 mb-4">{message}</p>
       <div class="flex justify-end gap-4">

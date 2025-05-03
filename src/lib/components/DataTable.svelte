@@ -18,8 +18,10 @@
   export let loading = false;
   export let showActions = false;
   export let sortConfig: SortConfig = { key: '', direction: null };
-  export let onEdit: ((item: any) => void) | undefined = undefined;
-  export let onDelete: ((item: any) => void) | undefined = undefined;
+  export let onEdit: ((item: any, triggerEl?: HTMLElement) => void) | undefined = undefined;
+  export let onDelete: ((item: any, triggerEl?: HTMLElement) => void) | undefined = undefined;
+
+  export let processingRowId: string | null = null;
 
   let imagePreview: { [key: string]: string } = {};
   let showImageModal = false;
@@ -137,55 +139,63 @@
       <tbody>
         {#each sortedItems as item}
           <tr class="border-b border-gray-700/50 hover:bg-[#332d4d]">
-            {#each fields as field}
-              <td class="px-6 py-4">
-                {#if field.type === 'boolean'}
-                  <span class={`px-3 py-1 rounded-full text-sm ${item[field.key] ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
-                    {item[field.key] 
-                      ? (field.booleanLabels?.true || 'Yes')
-                      : (field.booleanLabels?.false || 'No')}
-                  </span>
-                {:else if field.type === 'image'}
-                  <button
-                    class="cursor-pointer hover:opacity-80 transition-opacity"
-                    on:click={() => openImageModal(imagePreview[`${item.code}_${field.key}`] || getFallbackImageUrl(item.name), item.name)}
-                    aria-label="ดูรูปภาพขนาดใหญ่"
-                  >
-                    <img 
-                      src={imagePreview[`${item.code}_${field.key}`] || getFallbackImageUrl(item.name)} 
-                      alt={item.name} 
-                      class="h-12 w-12 object-cover rounded-lg"
-                      on:error={(e) => handleImageError(e, item.name)}
-                    />
-                  </button>
-                {:else}
-                  <span class="text-white">{item[field.key]}</span>
-                {/if}
+            {#if processingRowId === item.code}
+              <td colspan={fields.length + (showActions ? 1 : 0)} class="text-center py-4">
+                <div class="animate-spin rounded-full h-8 w-8 border-4 border-[#ff6b2b] border-t-transparent mx-auto"></div>
               </td>
-            {/each}
-            {#if showActions}
-              <td class="px-6 py-4">
-                <div class="flex gap-2">
-                  <button
-                    class="p-2 text-blue-400 hover:bg-blue-500/10 rounded-lg"
-                    on:click={() => onEdit?.(item)}
-                    aria-label="แก้ไข"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                      <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
-                    </svg>
-                  </button>
-                  <button
-                    class="p-2 text-red-400 hover:bg-red-500/10 rounded-lg"
-                    on:click={() => onDelete?.(item)}
-                    aria-label="ลบ"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                      <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
-                    </svg>
-                  </button>
-                </div>
-              </td>
+            {:else}
+              {#each fields as field}
+                <td class="px-6 py-4">
+                  {#if field.type === 'boolean'}
+                    <span class={`px-3 py-1 rounded-full text-sm ${item[field.key] ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
+                      {item[field.key] 
+                        ? (field.booleanLabels?.true || 'Yes')
+                        : (field.booleanLabels?.false || 'No')}
+                    </span>
+                  {:else if field.type === 'image'}
+                    <button
+                      class="cursor-pointer hover:opacity-80 transition-opacity"
+                      on:click={() => openImageModal(imagePreview[`${item.code}_${field.key}`] || getFallbackImageUrl(item.name), item.name)}
+                      aria-label="ดูรูปภาพขนาดใหญ่"
+                    >
+                      <img 
+                        src={imagePreview[`${item.code}_${field.key}`] || getFallbackImageUrl(item.name)} 
+                        alt={item.name} 
+                        width="48"
+                        height="48"
+                        class="h-12 w-12 object-cover rounded-lg"
+                        on:error={(e) => handleImageError(e, item.name)}
+                      />
+                    </button>
+                  {:else}
+                    <span class="text-white">{item[field.key]}</span>
+                  {/if}
+                </td>
+              {/each}
+              {#if showActions}
+                <td class="px-6 py-4">
+                  <div class="flex gap-2">
+                    <button
+                      class="p-2 text-blue-400 hover:bg-blue-500/10 rounded-lg"
+                      on:click={(e) => onEdit?.(item, e.currentTarget)}
+                      aria-label="แก้ไข"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                      </svg>
+                    </button>
+                    <button
+                      class="p-2 text-red-400 hover:bg-red-500/10 rounded-lg"
+                      on:click={(e) => onDelete?.(item, e.currentTarget)}
+                      aria-label="ลบ"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                      </svg>
+                    </button>
+                  </div>
+                </td>
+              {/if}
             {/if}
           </tr>
         {/each}
