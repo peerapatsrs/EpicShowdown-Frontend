@@ -18,7 +18,7 @@
   >
     <div class="relative max-w-4xl max-h-[90vh] mx-4" on:click|stopPropagation={() => {}} role="presentation" transition:scale={{ duration: 200 }}>
       <button 
-        class="absolute -top-10 right-0 text-white hover:text-[#ff6b2b] transition-colors"
+        class="absolute -top-10 right-0 text-white hover:text-[#ff6b2b] transition-colors cursor-pointer focus:outline-none"
         on:click={onClose}
         aria-label="ปิดรูปภาพ"
       >

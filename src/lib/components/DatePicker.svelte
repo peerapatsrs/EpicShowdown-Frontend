@@ -1,10 +1,13 @@
 <script lang="ts">
   import dayjs from 'dayjs';
   import { createEventDispatcher } from 'svelte';
+  import { clickOutside } from '$lib/actions/clickOutside';
+  import { onMount } from 'svelte';
+  import { portal } from 'svelte-portal';
 
   export let value: string = '';
   export let placeholder: string = 'เลือกวันที่';
-  export let maxDate: string = dayjs().format('YYYY-MM-DD');
+  export let maxDate: string = '';
   export let minDate: string = '';
   export let buttonClass: string = '';
   export let useBuddhistYear: boolean = true;
@@ -15,6 +18,9 @@
   let showMonthDropdown = false;
   let showYearDropdown = false;
   let tempDate = '';
+  let inputEl: HTMLButtonElement | null = null;
+  let popupLeft = 0;
+  let popupTop = 0;
 
   function toggleDatePicker() {
     showDatePicker = !showDatePicker;
@@ -25,6 +31,9 @@
 
   function handleDateSelect(date: string) {
     tempDate = date;
+    value = tempDate;
+    dispatch('change', { value: tempDate });
+    showDatePicker = false;
   }
 
   function applyDate() {
@@ -71,13 +80,24 @@
     if (minDate && dayjs(date).isBefore(dayjs(minDate))) return true;
     return false;
   };
+
+  function updatePopupPosition() {
+    if (inputEl) {
+      const rect = inputEl.getBoundingClientRect();
+      popupLeft = rect.left + window.scrollX;
+      popupTop = rect.bottom + window.scrollY + 4; // 4px margin
+    }
+  }
+
+  $: if (showDatePicker) updatePopupPosition();
 </script>
 
 <div class="relative">
   <button
+    bind:this={inputEl}
     type="button"
     class="w-full flex items-center justify-between rounded-xl bg-[#1a1625] px-4 py-3 text-white border border-gray-700 focus:border-[#ff6b2b] focus:ring-1 focus:ring-[#ff6b2b] transition-colors {buttonClass}"
-    on:click={toggleDatePicker}
+    on:click={() => { toggleDatePicker(); setTimeout(updatePopupPosition, 0); }}
     aria-label={placeholder}
   >
     <span class="text-left">{formatDisplayDate(value)}</span>
@@ -87,7 +107,9 @@
   </button>
 
   {#if showDatePicker}
-    <div class="absolute z-50 mt-2 p-4 bg-[#2a2440] rounded-xl shadow-xl border border-gray-700 w-[320px]">
+    <div use:portal class="fixed z-[120] mt-2 p-4 bg-[#2a2440] rounded-xl shadow-xl border border-gray-700 w-[320px]"
+      style="left: {popupLeft}px; top: {popupTop}px;"
+      use:clickOutside on:clickoutside={() => showDatePicker = false}>
       <div class="flex items-center justify-between mb-4">
         <button
           type="button"
@@ -194,10 +216,10 @@
             <button
               type="button"
               class="h-8 rounded-lg text-sm font-medium transition-colors
-                {isSelected ? 'bg-gradient-to-r from-[#ff6b2b] to-[#ee0979] text-white' : ''}
-                {isToday && !isSelected ? 'border-2 border-[#ff6b2b] text-white' : 'text-gray-300'}
-                {!isSelected && !isToday ? 'hover:bg-[#3d3654]' : ''}
-                {disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}"
+              {isSelected ? 'bg-gradient-to-r from-[#ff6b2b] to-[#ee0979] text-white' : ''}
+              {isToday && !isSelected ? 'border-2 border-[#ff6b2b] text-white' : 'text-gray-300'}
+              {!isSelected && !isToday ? 'hover:bg-[#3d3654]' : ''}
+              {disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}"
               disabled={disabled}
               on:click={() => !disabled && handleDateSelect(currentDate)}
             >
@@ -210,17 +232,10 @@
       <div class="flex justify-end gap-2 mt-4 pt-4 border-t border-gray-700">
         <button
           type="button"
-          class="px-4 py-2 text-sm font-medium text-gray-400 hover:text-white transition-colors"
-          on:click={() => showDatePicker = false}
+          class="px-4 py-2 text-sm font-medium text-gray-400 hover:text-white transition-colors cursor-pointer"
+          on:click={() => { value = ''; dispatch('change', { value: '' }); showDatePicker = false; }}
         >
-          ยกเลิก
-        </button>
-        <button
-          type="button"
-          class="px-4 py-2 text-sm font-medium bg-gradient-to-r from-[#ff6b2b] to-[#ee0979] text-white rounded-lg hover:opacity-90 transition-opacity"
-          on:click={applyDate}
-        >
-          ตกลง
+          ล้างค่า
         </button>
       </div>
     </div>

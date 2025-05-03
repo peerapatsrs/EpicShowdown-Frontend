@@ -8,12 +8,13 @@
   export let fields: {
     key: string;
     label: string;
-    type: 'text' | 'textarea' | 'url' | 'boolean' | 'image';
+    type: 'text' | 'textarea' | 'url' | 'boolean' | 'image' | 'date';
     required?: boolean;
     booleanLabels?: {
       true: string;
       false: string;
     };
+    tableShow?: boolean | true;
   }[] = [];
   export let loading = false;
   export let showActions = false;
@@ -27,6 +28,21 @@
   let showImageModal = false;
   let selectedImage = '';
   let selectedImageAlt = '';
+
+  // เพิ่ม dayjs สำหรับ format วันที่แบบไทย
+  import dayjs from 'dayjs';
+  import utc from 'dayjs/plugin/utc';
+  import timezone from 'dayjs/plugin/timezone';
+  import buddhistEra from 'dayjs/plugin/buddhistEra';
+  dayjs.extend(utc);
+  dayjs.extend(timezone);
+  dayjs.extend(buddhistEra);
+  dayjs.tz.setDefault('Asia/Bangkok');
+
+  function formatDateThai(date: string) {
+    if (!date) return '-';
+    return dayjs(date).tz('Asia/Bangkok').format('D MMMM BBBB HH:mm');
+  }
 
   // คำนวณข้อมูลที่เรียงลำดับแล้ว
   $: sortedItems = sortConfig.direction ? sortItems(items, sortConfig) : items;
@@ -104,6 +120,7 @@
       <thead>
         <tr class="text-left border-b border-gray-700">
           {#each fields as field}
+            {#if field.tableShow !== false}
             <th 
               class="px-6 py-3 text-[#ff6b2b] cursor-pointer hover:bg-[#332d4d] transition-colors group"
               on:click={() => handleSort(field.key)}
@@ -130,6 +147,7 @@
                 </div>
               </div>
             </th>
+            {/if}
           {/each}
           {#if showActions}
             <th class="px-6 py-3 text-[#ff6b2b]">จัดการ</th>
@@ -138,6 +156,7 @@
       </thead>
       <tbody>
         {#each sortedItems as item}
+          {#if item.tableShow !== false}
           <tr class="border-b border-gray-700/50 hover:bg-[#332d4d]">
             {#if processingRowId === item.code}
               <td colspan={fields.length + (showActions ? 1 : 0)} class="text-center py-4">
@@ -145,8 +164,11 @@
               </td>
             {:else}
               {#each fields as field}
+                {#if field.tableShow !== false}
                 <td class="px-6 py-4">
-                  {#if field.type === 'boolean'}
+                  {#if ['startDate','endDate','giftStartDate','giftEndDate','createdAt','updatedAt'].includes(field.key)}
+                    <span class="text-white">{formatDateThai(item[field.key])}</span>
+                  {:else if field.type === 'boolean'}
                     <span class={`px-3 py-1 rounded-full text-sm ${item[field.key] ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
                       {item[field.key] 
                         ? (field.booleanLabels?.true || 'Yes')
@@ -171,6 +193,7 @@
                     <span class="text-white">{item[field.key]}</span>
                   {/if}
                 </td>
+                {/if}
               {/each}
               {#if showActions}
                 <td class="px-6 py-4">
@@ -198,6 +221,7 @@
               {/if}
             {/if}
           </tr>
+          {/if}
         {/each}
       </tbody>
     </table>

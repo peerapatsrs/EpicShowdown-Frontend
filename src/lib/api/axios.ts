@@ -110,10 +110,9 @@ axiosInstance.interceptors.response.use(
             }
         }
 
-        // handle ทุกกรณีที่เกี่ยวกับ refresh token fail หรือ 401/400/403
         if (
             (originalRequest.url && originalRequest.url.includes('/Auth/refresh-token')) ||
-            (error.response && [400, 401, 403].includes(error.response.status))
+            (error.response && [404,500].includes(error.response.status))
         ) {
             auth.clearAuth();
             if (browser) {

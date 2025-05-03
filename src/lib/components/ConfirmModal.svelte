@@ -28,14 +28,14 @@
       <div class="flex justify-end gap-4">
         <button
           type="button"
-          class="px-4 py-2 rounded-xl border-2 border-gray-500 text-gray-300 hover:bg-[#1a1625]"
+          class="px-4 py-2 rounded-xl border-2 border-gray-500 text-gray-300 hover:bg-[#1a1625] cursor-pointer transition-colors"
           on:click={handleClose}
           disabled={loading}
         >
           ยกเลิก
         </button>
         <button
-          class="px-4 py-2 rounded-xl text-white font-medium disabled:opacity-50 disabled:cursor-not-allowed {confirmButtonClass}"
+          class="px-4 py-2 rounded-xl text-white font-medium cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition-all {confirmButtonClass}"
           on:click={handleConfirm}
           disabled={loading}
         >
