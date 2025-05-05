@@ -99,7 +99,11 @@
 
   function openAdd() {
     editingFieldId = null;
-    form = { name: '', type: '', description: '', isRequired: false, defaultValue: '', order: fields.length + 1 };
+    let maxOrder = 0;
+    if (fields && fields.length > 0) {
+      maxOrder = Math.max(...fields.map(f => Number(f.order) || 0));
+    }
+    form = { name: '', type: '', description: '', isRequired: false, defaultValue: '', order: maxOrder + 1 };
   }
 
   function openEdit(field: any) {
@@ -236,7 +240,6 @@
         {/if}
         <div class="flex flex-col md:flex-row gap-8">
           <div class="flex-1">
-            <h4 class="text-white/90 font-semibold mb-3 flex items-center gap-2"><svg class="w-5 h-5 text-[#ff6b2b]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg> รายการฟิลด์</h4>
             {#if loading}
               <div class="text-white/60">กำลังโหลด...</div>
             {:else if fields.length === 0}
