@@ -1,5 +1,5 @@
 <script lang="ts">
-  export let value: any;
+  export let value = '';
   export let options: { value: any; label: string }[] = [];
   export let placeholder = '';
   export let className = '';
@@ -14,7 +14,7 @@
     style="-webkit-appearance: none !important; -moz-appearance: none !important; appearance: none !important; background-image: none !important;"
   >
     {#if placeholder}
-      <option value={undefined}>{placeholder}</option>
+      <option value=''>{placeholder}</option>
     {/if}
     {#each options as option}
       <option value={option.value}>{option.label}</option>
