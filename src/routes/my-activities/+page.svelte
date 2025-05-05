@@ -5,6 +5,7 @@ import { fade, scale } from 'svelte/transition';
 import ConfirmModal from '$lib/components/ConfirmModal.svelte';
 import { isAuthenticated } from '$lib/stores/auth';
 import DatePicker from '$lib/components/DatePicker.svelte';
+import ManageFieldsModal from '$lib/components/ManageFieldsModal.svelte';
 
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
@@ -77,6 +78,7 @@ let filterEndDateOperator: 'eq' | 'gt' | 'lt' = 'eq';
 let filterGiftStartDateOperator: 'eq' | 'gt' | 'lt' = 'eq';
 let filterGiftEndDateOperator: 'eq' | 'gt' | 'lt' = 'eq';
 let isAdvancedFilterActive = false;
+let showManageFieldsModal = false;
 
 function filterItems(items: Contest[], term: string) {
   if (!term) return items;
@@ -181,15 +183,9 @@ async function handleAddSubmit() {
   }
 }
 
-function handleEditClick() {
-  mode = 'edit';
-}
-
 function handleCancel() {
-  mode = 'view';
-  if (items.length > 0 && !selectedItem) {
-    selectedItem = items[0];
-  }
+    resetForm();
+    selectedItem = null;
 }
 
 async function editItem() {
@@ -213,6 +209,7 @@ async function editItem() {
     console.error(e);
   } finally {
     processingRowId = null;
+    handleCancel()
   }
 }
 
@@ -410,7 +407,7 @@ onMount(async () => {
                   </div>
                   <div>
                     <label for="isActive" class="block text-white/80 mb-1">สถานะ</label>
-                    <input id="isActive" type="checkbox" checked={!!form.isActive} class="accent-[#ff6b2b]" disabled />
+                    <input id="isActive" type="checkbox" checked={!!form.isActive} class="accent-[#ff6b2b]" />
                   </div>
                   <div class="flex gap-4 mt-6">
                     <button type="submit" class="px-6 py-2 rounded-xl bg-gradient-to-r from-[#ff6b2b] to-[#ee0979] text-white font-medium hover:scale-105 transition-all" disabled={processingRowId !== null}>บันทึก</button>
@@ -461,11 +458,12 @@ onMount(async () => {
                   </div>
                   <div>
                     <label for="isActive" class="block text-white/80 mb-1">สถานะ</label>
-                    <input id="isActive" type="checkbox" checked={!!form.isActive} class="accent-[#ff6b2b]" disabled />
+                    <input id="isActive" type="checkbox" checked={!!form.isActive} class="accent-[#ff6b2b]" />
                   </div>
                   <div class="flex gap-4 mt-6">
-                    <button type="button" class="px-6 py-2 rounded-xl bg-gradient-to-r from-[#ff6b2b] to-[#ee0979] text-white font-medium hover:scale-105 transition-all" on:click={handleEditClick} disabled={processingRowId !== null}>แก้ไข</button>
+                    <button type="submit" class="px-6 py-2 rounded-xl bg-gradient-to-r from-[#ff6b2b] to-[#ee0979] text-white font-medium hover:scale-105 transition-all" disabled={processingRowId !== null}>แก้ไข</button>
                     <button type="button" class="px-6 py-2 rounded-xl bg-red-500/80 text-white font-medium hover:scale-105 transition-all" on:click={() => { if (selectedItem) openDeleteModal(selectedItem); }} disabled={processingRowId !== null}>ลบกิจกรรม</button>
+                    <button type="button" class="px-6 py-2 rounded-xl bg-blue-500/80 text-white font-medium hover:scale-105 transition-all" on:click={() => showManageFieldsModal = true} disabled={processingRowId !== null}>จัดการฟิลด์ผู้เข้าร่วม</button>
                   </div>
                 </form>
               {:else}
@@ -544,6 +542,8 @@ onMount(async () => {
     </div>
   </div>
 {/if}
+
+<ManageFieldsModal show={showManageFieldsModal} contestCode={selectedItem?.contestCode ?? ''} on:close={() => showManageFieldsModal = false} />
 
 <ConfirmModal
   show={showDeleteModal}
