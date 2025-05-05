@@ -1,5 +1,5 @@
 <script lang="ts">
-  export let value = '';
+  export let value: any;
   export let options: { value: any; label: string }[] = [];
   export let placeholder = '';
   export let className = '';

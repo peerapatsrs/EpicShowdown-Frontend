@@ -302,7 +302,7 @@
                   <select id="fieldType" class="w-full rounded-lg bg-[#1a1625] text-white p-3 border border-gray-700 focus:border-[#ff6b2b]" bind:value={form.type} required>
                     <option value="">-- เลือกชนิด --</option>
                     {#each fieldTypes as t}
-                      <option value={t.type}>{t.name}</option>
+                      <option value={t}>{t}</option>
                     {/each}
                   </select>
                 </div>

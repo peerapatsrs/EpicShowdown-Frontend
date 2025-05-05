@@ -6,6 +6,7 @@ import ConfirmModal from '$lib/components/ConfirmModal.svelte';
 import { isAuthenticated } from '$lib/stores/auth';
 import DatePicker from '$lib/components/DatePicker.svelte';
 import ManageFieldsModal from '$lib/components/ManageFieldsModal.svelte';
+import ManageContestantsModal from '$lib/components/ManageContestantsModal.svelte';
 
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
@@ -79,6 +80,7 @@ let filterGiftStartDateOperator: 'eq' | 'gt' | 'lt' = 'eq';
 let filterGiftEndDateOperator: 'eq' | 'gt' | 'lt' = 'eq';
 let isAdvancedFilterActive = false;
 let showManageFieldsModal = false;
+let showManageContestantsModal = false;
 
 function filterItems(items: Contest[], term: string) {
   if (!term) return items;
@@ -464,6 +466,7 @@ onMount(async () => {
                     <button type="submit" class="px-6 py-2 rounded-xl bg-gradient-to-r from-[#ff6b2b] to-[#ee0979] text-white font-medium hover:scale-105 transition-all" disabled={processingRowId !== null}>แก้ไข</button>
                     <button type="button" class="px-6 py-2 rounded-xl bg-red-500/80 text-white font-medium hover:scale-105 transition-all" on:click={() => { if (selectedItem) openDeleteModal(selectedItem); }} disabled={processingRowId !== null}>ลบกิจกรรม</button>
                     <button type="button" class="px-6 py-2 rounded-xl bg-blue-500/80 text-white font-medium hover:scale-105 transition-all" on:click={() => showManageFieldsModal = true} disabled={processingRowId !== null}>จัดการฟิลด์ผู้เข้าร่วม</button>
+                    <button type="button" class="px-6 py-2 rounded-xl bg-green-500/80 text-white font-medium hover:scale-105 transition-all" on:click={() => showManageContestantsModal = true} disabled={processingRowId !== null}>จัดการผู้เข้าร่วม</button>
                   </div>
                 </form>
               {:else}
@@ -544,6 +547,7 @@ onMount(async () => {
 {/if}
 
 <ManageFieldsModal show={showManageFieldsModal} contestCode={selectedItem?.contestCode ?? ''} on:close={() => showManageFieldsModal = false} />
+<ManageContestantsModal show={showManageContestantsModal} contestCode={selectedItem?.contestCode ?? ''} on:close={() => showManageContestantsModal = false} />
 
 <ConfirmModal
   show={showDeleteModal}

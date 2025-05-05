@@ -10,7 +10,7 @@ import { startRegistration } from '@simplewebauthn/browser';
 import 'flatpickr/dist/flatpickr.css';
 import { isAuthenticated } from '$lib/stores/auth';
 import FormModal from '$lib/components/FormModal.svelte';
-import type { EditField } from '$lib/types/form';
+import type { FormField } from '$lib/types/form';
 import locale from 'dayjs/locale/th';
 
 // เพิ่ม plugin สำหรับจัดการ timezone
@@ -42,7 +42,7 @@ let passwordForm = {
   newPassword: ''
 };
 
-const editFields: EditField[] = [
+const editFields: FormField[] = [
   { key: 'firstName', label: 'ชื่อ', type: 'text', required: true },
   { key: 'lastName', label: 'นามสกุล', type: 'text', required: true },
   { key: 'dateOfBirth', label: 'วันเกิด', type: 'date', maxDate: dayjs().format('YYYY-MM-DD') },
@@ -92,7 +92,6 @@ async function updateProfile() {
     error = e.response?.data?.message || 'เกิดข้อผิดพลาดในการอัปเดตข้อมูล';
   } finally {
     loading = false;
-    showEditModal = false;
   }
 }
 

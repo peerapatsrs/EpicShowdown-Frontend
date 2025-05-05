@@ -1,4 +1,4 @@
-export interface EditField {
+export interface FormField {
   key: string;
   label: string;
   type: 'text' | 'textarea' | 'url' | 'boolean' | 'image' | 'date';
