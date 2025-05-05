@@ -10,6 +10,7 @@
   export let minDate: string = '';
   export let buttonClass: string = '';
   export let useBuddhistYear: boolean = true;
+  export let id: string | undefined;
 
   const dispatch = createEventDispatcher();
   
@@ -133,6 +134,7 @@
     class="w-full flex items-center justify-between rounded-xl bg-[#1a1625] px-4 py-3 text-white border border-gray-700 focus:border-[#ff6b2b] focus:ring-1 focus:ring-[#ff6b2b] transition-colors {buttonClass}"
     on:click={() => { toggleDatePicker(); }}
     aria-label={placeholder}
+    id={id}
   >
     <span class="text-left">{formatDisplayDate(value)}</span>
     <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">

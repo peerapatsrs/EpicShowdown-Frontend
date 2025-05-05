@@ -115,6 +115,7 @@
               <label for={field.key} class="block text-gray-400 mb-2">{field.label}</label>
               {#if field.type === 'date'}
                 <DatePicker
+                  id={field.key}
                   bind:value={formData[field.key] as string}
                   placeholder={field.label}
                   maxDate={field.maxDate}

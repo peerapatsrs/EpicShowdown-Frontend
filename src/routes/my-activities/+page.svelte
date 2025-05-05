@@ -10,6 +10,7 @@ import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
 import buddhistEra from 'dayjs/plugin/buddhistEra';
+import { formatDateThai } from '$lib/utils/date';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -71,6 +72,10 @@ let filterStartDate = '';
 let filterEndDate = '';
 let filterGiftStartDate = '';
 let filterGiftEndDate = '';
+let filterStartDateOperator: 'eq' | 'gt' | 'lt' = 'eq';
+let filterEndDateOperator: 'eq' | 'gt' | 'lt' = 'eq';
+let filterGiftStartDateOperator: 'eq' | 'gt' | 'lt' = 'eq';
+let filterGiftEndDateOperator: 'eq' | 'gt' | 'lt' = 'eq';
 let isAdvancedFilterActive = false;
 
 function filterItems(items: Contest[], term: string) {
@@ -85,8 +90,26 @@ function filterItems(items: Contest[], term: string) {
 function applyAdvancedFilter() {
   filteredItems = items.filter(item => {
     const nameMatch = !filterName || item.name.toLowerCase().includes(filterName.toLowerCase());
-    const startDateMatch = !filterStartDate || (item.startDate && item.startDate >= filterStartDate);
-    const endDateMatch = !filterEndDate || (item.endDate && item.endDate <= filterEndDate);
+    let startDateMatch = true;
+    let endDateMatch = true;
+    if (filterStartDate) {
+      if (filterStartDateOperator === 'eq') {
+        startDateMatch = item.startDate === filterStartDate;
+      } else if (filterStartDateOperator === 'gt') {
+        startDateMatch = item.startDate > filterStartDate;
+      } else if (filterStartDateOperator === 'lt') {
+        startDateMatch = item.startDate < filterStartDate;
+      }
+    }
+    if (filterEndDate) {
+      if (filterEndDateOperator === 'eq') {
+        endDateMatch = item.endDate === filterEndDate;
+      } else if (filterEndDateOperator === 'gt') {
+        endDateMatch = item.endDate > filterEndDate;
+      } else if (filterEndDateOperator === 'lt') {
+        endDateMatch = item.endDate < filterEndDate;
+      }
+    }
     const giftStartDateMatch = !filterGiftStartDate || (item.giftStartDate && item.giftStartDate >= filterGiftStartDate);
     const giftEndDateMatch = !filterGiftEndDate || (item.giftEndDate && item.giftEndDate <= filterGiftEndDate);
     return nameMatch && startDateMatch && endDateMatch && giftStartDateMatch && giftEndDateMatch;
@@ -288,8 +311,8 @@ onMount(async () => {
                 : 'bg-gradient-to-r from-[#ff6b2b] to-[#ee0979]'}"
             on:click={() => showAdvancedFilter = true}
           >
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-              <path fill-rule="evenodd" d="M3 5a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-.293.707l-5 5V17a1 1 0 01-2 0v-4.293l-5-5A1 1 0 013 7V5z" clip-rule="evenodd" />
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707l-5.414 5.414A2 2 0 0014 13.586V19a1 1 0 01-1.447.894l-4-2A1 1 0 018 17v-3.414a2 2 0 00-.586-1.414L2 6.707A1 1 0 012 6V4z" />
             </svg>
             ฟิลเตอร์
             {#if isAdvancedFilterActive}
@@ -311,8 +334,17 @@ onMount(async () => {
                         class="w-full text-left px-4 py-3 rounded-lg transition-all font-medium text-white hover:bg-[#ff6b2b]/20 focus:bg-[#ff6b2b]/30 border border-transparent focus:outline-none {selectedItem && selectedItem.contestCode === item.contestCode ? 'bg-[#ff6b2b]/30 border-[#ff6b2b]' : ''}"
                         on:click={() => { selectItem(item); mode = 'view'; }}
                       >
-                        <div class="truncate">{item.name}</div>
-                        <div class="text-xs text-white/50 truncate">{item.description}</div>
+                        <div class="truncate" title={item.name}>{item.name}</div>
+                        <div class="text-xs text-white/50 truncate" title={item.description}>{item.description}</div>
+                        <div class="text-xs text-white/40 mt-1" style="color: {
+                          dayjs().isBefore(dayjs(item.startDate), 'day')
+                            ? '#2563eb' // blue
+                            : dayjs().isAfter(dayjs(item.endDate), 'day')
+                              ? '#ef4444' // red
+                              : '#22c55e' // green
+                        }">
+                          {dayjs(item.startDate).formatDateThai('DD/MM/YYYY', true)} - {dayjs(item.endDate).formatDateThai('DD/MM/YYYY', true)}
+                        </div>
                       </button>
                     </li>
                   {/each}
@@ -348,19 +380,19 @@ onMount(async () => {
                   <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label for="startDate" class="block text-white/80 mb-1">วันเริ่มกิจกรรม</label>
-                      <DatePicker bind:value={form.startDate as string} placeholder="วันเริ่มกิจกรรม" />
+                      <DatePicker id="startDate" bind:value={form.startDate as string} placeholder="วันเริ่มกิจกรรม" />
                     </div>
                     <div>
                       <label for="endDate" class="block text-white/80 mb-1">วันสิ้นสุดกิจกรรม</label>
-                      <DatePicker bind:value={form.endDate as string} placeholder="วันสิ้นสุดกิจกรรม" />
+                      <DatePicker id="endDate" bind:value={form.endDate as string} placeholder="วันสิ้นสุดกิจกรรม" />
                     </div>
                     <div>
                       <label for="giftStartDate" class="block text-white/80 mb-1">วันเริ่มส่งของขวัญ</label>
-                      <DatePicker bind:value={form.giftStartDate as string} placeholder="วันเริ่มส่งของขวัญ" />
+                      <DatePicker id="giftStartDate" bind:value={form.giftStartDate as string} placeholder="วันเริ่มส่งของขวัญ" />
                     </div>
                     <div>
                       <label for="giftEndDate" class="block text-white/80 mb-1">วันสิ้นสุดส่งของขวัญ</label>
-                      <DatePicker bind:value={form.giftEndDate as string} placeholder="วันสิ้นสุดส่งของขวัญ" />
+                      <DatePicker id="giftEndDate" bind:value={form.giftEndDate as string} placeholder="วันสิ้นสุดส่งของขวัญ" />
                     </div>
                   </div>
                   <div>
@@ -399,19 +431,19 @@ onMount(async () => {
                   <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label for="startDate" class="block text-white/80 mb-1">วันเริ่มกิจกรรม</label>
-                      <DatePicker bind:value={form.startDate as string} placeholder="เลือกวันที่" />
+                      <DatePicker id="startDate" bind:value={form.startDate as string} placeholder="เลือกวันที่" />
                     </div>
                     <div>
                       <label for="endDate" class="block text-white/80 mb-1">วันสิ้นสุดกิจกรรม</label>
-                      <DatePicker bind:value={form.endDate as string} placeholder="เลือกวันที่" />
+                      <DatePicker id="endDate" bind:value={form.endDate as string} placeholder="เลือกวันที่" />
                     </div>
                     <div>
                       <label for="giftStartDate" class="block text-white/80 mb-1">วันเริ่มส่งของขวัญ</label>
-                      <DatePicker bind:value={form.giftStartDate as string} placeholder="เลือกวันที่" />
+                      <DatePicker id="giftStartDate" bind:value={form.giftStartDate as string} placeholder="เลือกวันที่" />
                     </div>
                     <div>
                       <label for="giftEndDate" class="block text-white/80 mb-1">วันสิ้นสุดส่งของขวัญ</label>
-                      <DatePicker bind:value={form.giftEndDate as string} placeholder="เลือกวันที่" />
+                      <DatePicker id="giftEndDate" bind:value={form.giftEndDate as string} placeholder="เลือกวันที่" />
                     </div>
                   </div>
                   <div>
@@ -450,7 +482,7 @@ onMount(async () => {
 {#if showAdvancedFilter}
   <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" transition:fade={{ duration: 200 }}>
     <div class="bg-[#2a2440] rounded-xl w-full max-w-md max-h-[90vh] flex flex-col p-0" transition:scale={{ duration: 200 }}>
-      <h3 class="text-xl font-bold text-white mb-4 px-6 pt-6">ฟิลเตอร์แอดวานซ์</h3>
+      <h3 class="text-xl font-bold text-white mb-4 px-6 pt-6">ฟิลเตอร์</h3>
       <div class="flex-1 overflow-y-auto px-6" style="min-height:0;">
         <form class="space-y-4 pb-4" on:submit|preventDefault={applyAdvancedFilter}>
           <div>
@@ -460,19 +492,47 @@ onMount(async () => {
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label for="filterStartDate" class="block text-white/80 mb-1">วันที่เริ่ม</label>
-              <DatePicker placeholder="เลือกวันที่" bind:value={filterStartDate} />
+              <div class="flex gap-2 items-center filter-operator">
+                <select id="filterStartDateOperator" bind:value={filterStartDateOperator} class="rounded bg-[#251f35] text-white border border-gray-700 px-2 py-1">
+                  <option value="eq">=</option>
+                  <option value="gt">&gt;</option>
+                  <option value="lt">&lt;</option>
+                </select>
+                <DatePicker id="filterStartDate" placeholder="เลือกวันที่" bind:value={filterStartDate} />
+              </div>
             </div>
             <div>
               <label for="filterEndDate" class="block text-white/80 mb-1">วันที่สิ้นสุด</label>
-              <DatePicker placeholder="เลือกวันที่" bind:value={filterEndDate} />
+              <div class="flex gap-2 items-center filter-operator">
+                <select id="filterEndDateOperator" bind:value={filterEndDateOperator} class="rounded bg-[#251f35] text-white border border-gray-700 px-2 py-1">
+                  <option value="eq">=</option>
+                  <option value="gt">&gt;</option>
+                  <option value="lt">&lt;</option>
+                </select>
+                <DatePicker id="filterEndDate" placeholder="เลือกวันที่" bind:value={filterEndDate} />
+              </div>
             </div>
             <div>
               <label for="filterGiftStartDate" class="block text-white/80 mb-1">วันที่เริ่มส่งของขวัญ</label>
-              <DatePicker placeholder="เลือกวันที่" bind:value={filterGiftStartDate} />
+              <div class="flex gap-2 items-center filter-operator">
+                <select id="filterGiftStartDateOperator" bind:value={filterGiftStartDateOperator} class="rounded bg-[#251f35] text-white border border-gray-700 px-2 py-1">
+                  <option value="eq">=</option>
+                  <option value="gt">&gt;</option>
+                  <option value="lt">&lt;</option>
+                </select>
+                <DatePicker id="filterGiftStartDate" placeholder="เลือกวันที่" bind:value={filterGiftStartDate} />
+              </div>
             </div>
             <div>
               <label for="filterGiftEndDate" class="block text-white/80 mb-1">วันที่สิ้นสุดส่งของขวัญ</label>
-              <DatePicker placeholder="เลือกวันที่" bind:value={filterGiftEndDate} />
+              <div class="flex gap-2 items-center filter-operator">
+                <select id="filterGiftEndDateOperator" bind:value={filterGiftEndDateOperator} class="rounded bg-[#251f35] text-white border border-gray-700 px-2 py-1">
+                  <option value="eq">=</option>
+                  <option value="gt">&gt;</option>
+                  <option value="lt">&lt;</option>
+                </select>
+                <DatePicker id="filterGiftEndDate" placeholder="เลือกวันที่" bind:value={filterGiftEndDate} />
+              </div>
             </div>
           </div>
         </form>
@@ -496,3 +556,16 @@ onMount(async () => {
     currentItem = null;
   }}
 /> 
+
+<style>
+    .filter-operator select {
+        -webkit-appearance: none !important; -moz-appearance: none !important; appearance: none !important; background-image: none !important;
+    }
+    .filter-operator select option {
+        background-color: #251f35;
+        color: #fff;
+        border: 1px solid #332d4d;
+        border-radius: 4px;
+        padding: 4px 8px;
+    }
+</style>

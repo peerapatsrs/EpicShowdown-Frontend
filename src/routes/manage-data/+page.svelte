@@ -260,6 +260,7 @@
           </div>
           <div class="flex gap-4 w-full md:w-auto">
             <Select
+              id="selectedType"
               bind:value={selectedType}
               options={dataTypes.map(type => ({ value: type, label: type.name }))}
             />
