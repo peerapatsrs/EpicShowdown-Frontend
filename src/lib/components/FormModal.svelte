@@ -2,6 +2,7 @@
   import { getImage, uploadImage } from '$lib/utils/image';
   import { fade, scale } from 'svelte/transition';
   import DatePicker from './DatePicker.svelte';
+  import Checkbox from './Checkbox.svelte';
 
   export let show = false;
   export let title: string;
@@ -111,7 +112,9 @@
         <div class="space-y-4 pb-4">
           {#each fields as field}
             <div>
-              <label for={field.key} class="block text-gray-400 mb-2">{field.label}</label>
+              {#if field.type !== 'boolean'}
+                <label for={field.key} class="block text-gray-400 mb-2">{field.label}</label>
+              {/if}
               {#if field.type === 'date'}
                 <DatePicker
                   id={field.key}
@@ -131,13 +134,7 @@
                 ></textarea>
               {:else if field.type === 'boolean'}
                 <div class="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    id={field.key}
-                    bind:checked={formData[field.key] as boolean}
-                    class="rounded border-gray-700 text-[#ff6b2b] focus:ring-[#ff6b2b]"
-                  />
-                  <label for={field.key} class="text-gray-400">{field.label}</label>
+                  <Checkbox id={field.key} bind:checked={formData[field.key] as boolean} label={field.label} />
                 </div>
               {:else if field.type === 'image'}
                 <div class="space-y-2">

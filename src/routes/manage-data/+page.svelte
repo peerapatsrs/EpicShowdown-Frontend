@@ -7,6 +7,7 @@
   import ConfirmModal from '$lib/components/ConfirmModal.svelte';
   import Select from '$lib/components/Select.svelte';
 	import { isAuthenticated } from '$lib/stores/auth';
+  import Checkbox from '$lib/components/Checkbox.svelte';
 
   interface DataType {
     id: string;

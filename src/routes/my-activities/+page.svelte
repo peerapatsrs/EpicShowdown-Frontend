@@ -7,6 +7,7 @@ import { isAuthenticated } from '$lib/stores/auth';
 import DatePicker from '$lib/components/DatePicker.svelte';
 import ManageFieldsModal from '$lib/components/ManageFieldsModal.svelte';
 import ManageContestantsModal from '$lib/components/ManageContestantsModal.svelte';
+import Checkbox from '$lib/components/Checkbox.svelte';
 
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
@@ -199,7 +200,6 @@ async function editItem() {
   error = success = '';
   try {
     const payload = { ...form };
-    delete payload.isActive;
     const response = await axiosInstance.put(`/Contest/${code}`, payload);
     success = 'แก้ไขกิจกรรมสำเร็จ';
     items = items.map(item =>
@@ -370,11 +370,11 @@ onMount(async () => {
                 <form on:submit|preventDefault={handleAddSubmit} class="space-y-4">
                   <div>
                     <label for="name" class="block text-white/80 mb-1">ชื่อกิจกรรม</label>
-                    <input id="name" type="text" class="w-full rounded-lg bg-[#251f35] text-white p-2 border border-gray-700 focus:border-[#ff6b2b]" bind:value={form.name} />
+                    <input id="name" type="text" class="w-full rounded-lg bg-[#251f35] text-white p-2 border border-gray-700 focus:border-[#ff6b2b] focus:ring-1 focus:ring-[#ff6b2b]" bind:value={form.name} />
                   </div>
                   <div>
                     <label for="description" class="block text-white/80 mb-1">คำอธิบาย</label>
-                    <textarea id="description" class="w-full rounded-lg bg-[#251f35] text-white p-2 border border-gray-700 focus:border-[#ff6b2b]" bind:value={form.description}></textarea>
+                    <textarea id="description" class="w-full rounded-lg bg-[#251f35] text-white p-2 border border-gray-700 focus:border-[#ff6b2b] focus:ring-1 focus:ring-[#ff6b2b]" bind:value={form.description}></textarea>
                   </div>
                   <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
@@ -398,7 +398,7 @@ onMount(async () => {
                     <label for="displayTemplateCode" class="block text-white/80 mb-1">Display Template</label>
                     <select
                       id="displayTemplateCode"
-                      class="w-full rounded-lg bg-[#251f35] text-white p-2 border border-gray-700 focus:border-[#ff6b2b]"
+                      class="w-full rounded-lg bg-[#251f35] text-white p-2 border border-gray-700 focus:border-[#ff6b2b] focus:ring-1 focus:ring-[#ff6b2b]"
                       bind:value={form.displayTemplateCode}
                     >
                       <option value="">-- เลือก Template --</option>
@@ -408,8 +408,7 @@ onMount(async () => {
                     </select>
                   </div>
                   <div>
-                    <label for="isActive" class="block text-white/80 mb-1">สถานะ</label>
-                    <input id="isActive" type="checkbox" checked={!!form.isActive} class="accent-[#ff6b2b]" />
+                    <Checkbox id="isActive" label="สถานะ" bind:checked={form.isActive as boolean} />
                   </div>
                   <div class="flex gap-4 mt-6">
                     <button type="submit" class="px-6 py-2 rounded-xl bg-gradient-to-r from-[#ff6b2b] to-[#ee0979] text-white font-medium hover:scale-105 transition-all" disabled={processingRowId !== null}>บันทึก</button>
@@ -421,11 +420,11 @@ onMount(async () => {
                 <form on:submit|preventDefault={editItem} class="space-y-4">
                   <div>
                     <label for="name" class="block text-white/80 mb-1">ชื่อกิจกรรม</label>
-                    <input id="name" type="text" class="w-full rounded-lg bg-[#251f35] text-white p-2 border border-gray-700 focus:border-[#ff6b2b]" bind:value={form.name} />
+                    <input id="name" type="text" class="w-full rounded-lg bg-[#251f35] text-white p-2 border border-gray-700 focus:border-[#ff6b2b] focus:ring-1 focus:ring-[#ff6b2b]" bind:value={form.name} />
                   </div>
                   <div>
                     <label for="description" class="block text-white/80 mb-1">คำอธิบาย</label>
-                    <textarea id="description" class="w-full rounded-lg bg-[#251f35] text-white p-2 border border-gray-700 focus:border-[#ff6b2b]" bind:value={form.description}></textarea>
+                    <textarea id="description" class="w-full rounded-lg bg-[#251f35] text-white p-2 border border-gray-700 focus:border-[#ff6b2b] focus:ring-1 focus:ring-[#ff6b2b]" bind:value={form.description}></textarea>
                   </div>
                   <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
@@ -449,7 +448,7 @@ onMount(async () => {
                     <label for="displayTemplateCode" class="block text-white/80 mb-1">Display Template</label>
                     <select
                       id="displayTemplateCode"
-                      class="w-full rounded-lg bg-[#251f35] text-white p-2 border border-gray-700 focus:border-[#ff6b2b]"
+                      class="w-full rounded-lg bg-[#251f35] text-white p-2 border border-gray-700 focus:border-[#ff6b2b] focus:ring-1 focus:ring-[#ff6b2b]"
                       bind:value={form.displayTemplateCode}
                     >
                       <option value="">-- เลือก Template --</option>
@@ -459,8 +458,7 @@ onMount(async () => {
                     </select>
                   </div>
                   <div>
-                    <label for="isActive" class="block text-white/80 mb-1">สถานะ</label>
-                    <input id="isActive" type="checkbox" checked={!!form.isActive} class="accent-[#ff6b2b]" />
+                    <Checkbox id="isActive" label="สถานะ" bind:checked={form.isActive as boolean} />
                   </div>
                   <div class="flex gap-4 mt-6">
                     <button type="submit" class="px-6 py-2 rounded-xl bg-gradient-to-r from-[#ff6b2b] to-[#ee0979] text-white font-medium hover:scale-105 transition-all" disabled={processingRowId !== null}>แก้ไข</button>
@@ -488,7 +486,7 @@ onMount(async () => {
         <form class="space-y-4 pb-4" on:submit|preventDefault={applyAdvancedFilter}>
           <div>
             <label for="filterName" class="block text-white/80 mb-1">ค้นหาชื่อกิจกรรม</label>
-            <input id="filterName" type="text" class="w-full rounded-lg bg-[#251f35] text-white p-2 border border-gray-700 focus:border-[#ff6b2b]" placeholder="ชื่อกิจกรรม..." bind:value={filterName} />
+            <input id="filterName" type="text" class="w-full rounded-lg bg-[#251f35] text-white p-2 border border-gray-700 focus:border-[#ff6b2b] focus:ring-1 focus:ring-[#ff6b2b]" placeholder="ชื่อกิจกรรม..." bind:value={filterName} />
           </div>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>

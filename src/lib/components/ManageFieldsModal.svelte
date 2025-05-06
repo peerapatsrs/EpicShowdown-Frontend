@@ -42,6 +42,7 @@
       error = 'โหลดฟิลด์ไม่สำเร็จ';
     } finally {
       loading = false;
+      openAdd();
     }
   }
 
@@ -174,7 +175,6 @@
     if (show) {
       loadFields();
       loadFieldTypes();
-      openAdd();
     }
   });
 
@@ -182,7 +182,6 @@
     // reload fields when modal is opened
     loadFields();
     loadFieldTypes();
-    openAdd();
   }
 
   $: if (show && fields.length === 0) {

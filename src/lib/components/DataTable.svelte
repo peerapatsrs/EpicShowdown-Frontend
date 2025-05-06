@@ -169,10 +169,13 @@
                   {#if ['startDate','endDate','giftStartDate','giftEndDate','createdAt','updatedAt'].includes(field.key)}
                     <span class="text-white">{formatDateThai(item[field.key])}</span>
                   {:else if field.type === 'boolean'}
-                    <span class={`px-3 py-1 rounded-full text-sm ${item[field.key] ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
-                      {item[field.key] 
-                        ? (field.booleanLabels?.true || 'Yes')
-                        : (field.booleanLabels?.false || 'No')}
+                    <span class={`px-3 py-1 rounded-full text-base font-bold
+                      ${item[field.key]
+                        ? 'bg-[#ff6b2b] text-white'
+                        : 'bg-[#251f35] text-[#ff6b2b] border border-[#ff6b2b]'}`}>
+                      {item[field.key]
+                        ? (field.booleanLabels?.true || '✔')
+                        : (field.booleanLabels?.false || '✘')}
                     </span>
                   {:else if field.type === 'image'}
                     <button
