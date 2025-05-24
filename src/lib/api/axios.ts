@@ -1,11 +1,11 @@
 import axios from 'axios';
 import { auth } from '$lib/stores/auth';
-import { PUBLIC_SITE_URL } from '$env/static/public';
+import { env } from '$env/dynamic/public';
 import { goto } from '$app/navigation';
 import { browser } from '$app/environment';
 
 const axiosInstance = axios.create({
-    baseURL: `${PUBLIC_SITE_URL}/gw/api`,
+    baseURL: `${env.PUBLIC_SITE_URL}/gw/api`,
     headers: {
         'Content-Type': 'application/json'
     },
