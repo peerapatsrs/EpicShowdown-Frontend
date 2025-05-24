@@ -1,4 +1,4 @@
-app = "epic-showdown-frontend-v3"
+app = "epic-showdown-frontend"
 primary_region = "sin"
 
 [build]

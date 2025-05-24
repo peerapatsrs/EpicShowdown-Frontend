@@ -3,7 +3,6 @@ FROM node:20-alpine as builder
 WORKDIR /app
 
 COPY package*.json ./
-RUN rm -rf node_modules package-lock.json
 RUN npm ci
 
 COPY . .
