@@ -6,7 +6,9 @@ primary_region = "sin"
 
 [env]
   PORT = "8080"
-  NODE_ENV = "production"
+
+[build.args]
+  PUBLIC_SITE_URL="https://epic-showdown-frontend.fly.dev"
 
 [http_service]
   internal_port = 8080

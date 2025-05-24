@@ -3,7 +3,10 @@ import fetch from 'node-fetch';
 import type { RequestInit } from 'node-fetch';
 import https from 'https';
 import { Readable } from 'stream';
-import { PRIVATE_API_URL, PRIVATE_NODE_ENV } from '$env/static/private';
+import { env } from '$env/dynamic/private';
+
+const PRIVATE_API_URL  = env.PRIVATE_API_URL  ?? 'https://localhost:8000';
+const PRIVATE_NODE_ENV   = env.PRIVATE_NODE_ENV ?? 'production';
 
 async function streamToBuffer(stream: ReadableStream): Promise<Buffer> {
     const chunks: Uint8Array[] = [];
