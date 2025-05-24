@@ -4,12 +4,18 @@ import { env } from '$env/dynamic/public';
 import { goto } from '$app/navigation';
 import { browser } from '$app/environment';
 
+const prefix = (env.PUBLIC_SITE_URL ?? '').replace(/\/+$/, '');  
+// ถ้าเป็น undefined หรือ "" → prefix = ""
+// ถ้าเป็น "https://foo.fly.dev/" → prefix = "https://foo.fly.dev"
+
+const baseURL = prefix 
+  ? `${prefix}/gw/api`    // มี PUBLIC_SITE_URL
+  : '/gw/api';            // ไม่มี → ใช้ relative path
+
 const axiosInstance = axios.create({
-    baseURL: `${env.PUBLIC_SITE_URL}/gw/api`,
-    headers: {
-        'Content-Type': 'application/json'
-    },
-    withCredentials: true
+  baseURL,
+  headers: { 'Content-Type': 'application/json' },
+  withCredentials: true
 });
 
 const refreshToken = async (refreshToken: string) => {
