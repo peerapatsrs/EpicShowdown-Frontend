@@ -7,9 +7,6 @@ primary_region = "sin"
 [env]
   PORT = "8080"
 
-[build.args]
-  PUBLIC_SITE_URL="https://epicshowdown.fly.dev"
-
 [http_service]
   internal_port = 8080
   force_https = true
