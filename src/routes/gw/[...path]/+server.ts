@@ -1,12 +1,11 @@
 import { error } from '@sveltejs/kit';
 import fetch from 'node-fetch';
 import type { RequestInit } from 'node-fetch';
-import https from 'https';
+import http from 'http';
 import { Readable } from 'stream';
 import { env } from '$env/dynamic/private';
 
-const PRIVATE_API_URL  = env.PRIVATE_API_URL  ?? 'https://localhost:8000';
-const PRIVATE_NODE_ENV   = env.PRIVATE_NODE_ENV ?? 'production';
+const PRIVATE_API_URL  = env.PRIVATE_API_URL  ?? 'http://localhost:8080';
 
 async function streamToBuffer(stream: ReadableStream): Promise<Buffer> {
     const chunks: Uint8Array[] = [];
@@ -27,15 +26,15 @@ async function handle(request: Request, params: { path?: string[] | string }, ur
         : (params.path || '');
 
     const targetUrl = `${PRIVATE_API_URL}/${forwardPath}${url.search}`;
+    const targetUrlObj = new URL(targetUrl);
 
     const headers = new Headers(request.headers);
-    headers.set('host', new URL(PRIVATE_API_URL).host);
+    headers.set('host', targetUrlObj.host);
     headers.delete('origin');
 
     try {
-        const agent = new https.Agent({
-            rejectUnauthorized: PRIVATE_NODE_ENV === 'production'
-        });
+        // ใช้ HTTP สำหรับการสื่อสารภายใน Fly.io
+        const agent = new http.Agent();
 
         let body: Buffer | undefined;
         if (request.method !== 'GET' && request.method !== 'HEAD' && request.body) {
