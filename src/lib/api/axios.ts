@@ -112,16 +112,6 @@ axiosInstance.interceptors.response.use(
             }
         }
 
-        if (
-            (originalRequest.url && originalRequest.url.includes('/Auth/refresh-token')) ||
-            (error.response && [404,500].includes(error.response.status))
-        ) {
-            auth.clearAuth();
-            if (browser) {
-                goto('/login');
-            }
-        }
-
         return Promise.reject(error);
     }
 );
